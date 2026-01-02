@@ -46,26 +46,43 @@
 
 ## 🛠️ 快速开始
 
-### 环境要求
+### 方式一：Docker 一键部署（推荐）
+
+```bash
+# 克隆项目
+git clone https://github.com/Oumu33/snmp-mib-ui.git
+cd snmp-mib-ui
+
+# 一键启动
+docker-compose up -d
+
+# 访问 http://localhost:3000
+```
+
+> 💡 已配置国内镜像加速（阿里云 Alpine + Go Proxy + npm 淘宝源）
+
+### 方式二：手动部署
+
+#### 环境要求
 - Go 1.21+
 - Node.js 18+
 - net-snmp (用于 MIB 解析)
 
-### 1. 克隆项目
+#### 1. 克隆项目
 ```bash
 git clone https://github.com/Oumu33/snmp-mib-ui.git
 cd snmp-mib-ui
 ```
 
-### 2. 启动后端
+#### 2. 启动后端
 ```bash
 cd backend
 go mod tidy
-go run cmd/main.go
+go run main.go
 # 后端运行在 http://localhost:8080
 ```
 
-### 3. 启动前端
+#### 3. 启动前端
 ```bash
 cd frontend
 npm install
@@ -73,7 +90,7 @@ npm run dev
 # 前端运行在 http://localhost:3000
 ```
 
-### 4. 开始使用
+### 开始使用
 1. 打开浏览器访问 `http://localhost:3000`
 2. 上传厂商 MIB 文件包（ZIP 格式）
 3. 添加目标设备信息
@@ -98,14 +115,18 @@ npm run dev
 
 ```
 snmp-mib-explorer-pro/
+├── docker-compose.yml       # Docker 一键部署
 ├── backend/                 # Go 后端
-│   ├── cmd/                 # 入口
+│   ├── Dockerfile           # 后端镜像构建
+│   ├── main.go              # 入口
 │   ├── internal/
 │   │   ├── handler/         # HTTP 处理器
 │   │   ├── service/         # 业务逻辑
 │   │   └── model/           # 数据模型
-│   └── mib_root/            # MIB 文件存储
+│   └── data/mibs/           # MIB 文件存储
 ├── frontend/                # React 前端
+│   ├── Dockerfile           # 前端镜像构建
+│   ├── nginx.conf           # Nginx 配置
 │   ├── components/          # UI 组件
 │   ├── services/            # API 服务
 │   └── types/               # TypeScript 类型

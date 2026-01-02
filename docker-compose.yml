@@ -1,0 +1,43 @@
+# ===================================
+# SNMP MIB Explorer Pro
+# Docker Compose 一键部署
+# ===================================
+
+version: '3.8'
+
+services:
+  # 后端服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: snmp-mib-backend
+    restart: unless-stopped
+    volumes:
+      # 持久化数据库和 MIB 文件
+      - ./data:/app/data
+    networks:
+      - snmp-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: snmp-mib-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - snmp-network
+
+networks:
+  snmp-network:
+    driver: bridge
