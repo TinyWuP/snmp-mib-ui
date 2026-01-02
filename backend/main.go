@@ -12,8 +12,11 @@ import (
 )
 
 func main() {
-	// Data paths
-	dataDir := "./data"
+	// 从环境变量读取配置
+	dataDir := os.Getenv("DATA_DIR")
+	if dataDir == "" {
+		dataDir = "./data"
+	}
 	dbPath := filepath.Join(dataDir, "app.db")
 	mibPath := filepath.Join(dataDir, "mibs")
 
@@ -31,8 +34,12 @@ func main() {
 	// Initialize extended handler (includes all services)
 	h := handler.NewExtendedHandler(db, mibPath)
 
-	// Setup Gin
-	gin.SetMode(gin.ReleaseMode)
+	// Setup Gin - 从环境变量读取模式
+	ginMode := os.Getenv("GIN_MODE")
+	if ginMode == "" {
+		ginMode = gin.ReleaseMode
+	}
+	gin.SetMode(ginMode)
 	r := gin.Default()
 
 	// CORS - allow all origins for development

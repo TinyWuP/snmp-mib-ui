@@ -13,13 +13,20 @@ services:
       dockerfile: Dockerfile
     container_name: snmp-mib-backend
     restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - PORT=${BACKEND_PORT:-8080}
+      - GIN_MODE=${GIN_MODE:-release}
+      - DATA_DIR=/app/data
+      - TZ=${TZ:-Asia/Shanghai}
     volumes:
       # 持久化数据库和 MIB 文件
-      - ./data:/app/data
+      - ${DATA_DIR:-./data}:/app/data
     networks:
       - snmp-network
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:${BACKEND_PORT:-8080}/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -29,10 +36,16 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
     container_name: snmp-mib-frontend
     restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - TZ=${TZ:-Asia/Shanghai}
     ports:
-      - "3000:80"
+      - "${FRONTEND_PORT:-3000}:80"
     depends_on:
       - backend
     networks:
