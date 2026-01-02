@@ -1,0 +1,1 @@
+{"id":"0dc525a9-eab0-4ed3-8231-80cd4a3402b9","name":"HUAWEI-USC-MIB.mib","path":"data/mibs/MIB_V200R022C00SPC500/HUAWEI-USC-MIB.mib","nodes":[{"name":"hwUSCObjects","oid":"hwUSC.1","parentOid":"hwUSC","children":[]}],"isParsed":true}

@@ -1,0 +1,1 @@
+{"id":"4a46ebd1-5628-4b03-b312-2fd764eb3711","name":"HUAWEI-MSDP-MIB.mib","path":"data/mibs/MIB_V200R022C00SPC500/HUAWEI-MSDP-MIB.mib","nodes":[{"name":"hwMsdpMIBObjects","oid":"hwMsdpMIB.1","parentOid":"hwMsdpMIB","children":[]}],"isParsed":true}

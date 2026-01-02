@@ -1,0 +1,1 @@
+{"id":"0633957b-aba7-4c3a-bcdc-f1a0666e207b","name":"MPLS-TC-STD-MIB.mib","path":"data/mibs/MIB_V200R022C00SPC500/MPLS-TC-STD-MIB.mib","nodes":[{"name":"mplsStdMIB","oid":"transmission.166","parentOid":"transmission","children":[]}],"isParsed":true}

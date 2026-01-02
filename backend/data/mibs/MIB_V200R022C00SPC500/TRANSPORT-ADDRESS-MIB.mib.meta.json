@@ -1,0 +1,1 @@
+{"id":"577bd3a3-348b-44e0-8838-8f882c61fe55","name":"TRANSPORT-ADDRESS-MIB.mib","path":"data/mibs/MIB_V200R022C00SPC500/TRANSPORT-ADDRESS-MIB.mib","nodes":[{"name":"transportDomains","oid":"transportAddressMIB.1","parentOid":"transportAddressMIB","children":[]}],"isParsed":true}

@@ -1,0 +1,5 @@
+{
+  "name": "SNMP MIB Explorer Pro",
+  "description": "A high-end, fully local SNMP MIB browser and parser for network engineers. Features hierarchical tree navigation, deep OID analysis, and local configuration generation.",
+  "requestFramePermissions": []
+}

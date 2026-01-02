@@ -1,0 +1,1 @@
+{"id":"c15768f8-53e5-463e-9f71-835263b6b66d","name":"RFC1155-SMI.mib","path":"data/mibs/MIB_V200R022C00SPC500/RFC1155-SMI.mib","nodes":[{"name":"internet","oid":"iso.org(3).dod(6).1","parentOid":"iso","children":[]}],"isParsed":true}

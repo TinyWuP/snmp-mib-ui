@@ -1,0 +1,1 @@
+{"id":"be422168-df40-4803-93b7-324e20d0ce61","name":"IPV6-TCP-MIB.mib","path":"data/mibs/MIB_V200R022C00SPC500/IPV6-TCP-MIB.mib","nodes":[{"name":"tcp","oid":"mib-2.6","parentOid":"mib-2","children":[]},{"name":"ipv6TcpConformance","oid":"ipv6TcpMIB.2","parentOid":"ipv6TcpMIB","children":[]}],"isParsed":true}

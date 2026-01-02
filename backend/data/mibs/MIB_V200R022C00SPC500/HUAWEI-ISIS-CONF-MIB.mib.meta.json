@@ -1,0 +1,1 @@
+{"id":"c655ab93-8bee-494b-a3d3-cea4078aa2e7","name":"HUAWEI-ISIS-CONF-MIB.mib","path":"data/mibs/MIB_V200R022C00SPC500/HUAWEI-ISIS-CONF-MIB.mib","nodes":[{"name":"hwIsisConf","oid":"hwISIS.2","parentOid":"hwISIS","children":[{"name":"hwIsisConfConformance","oid":"hwIsisConf.3","parentOid":"hwIsisConf","children":[]}]}],"isParsed":true}

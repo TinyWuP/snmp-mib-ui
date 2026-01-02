@@ -1,0 +1,1 @@
+{"id":"3c8a9883-5cf8-4489-a6d4-087f5057ca74","name":"MSDP-MIB.mib","path":"data/mibs/MIB_V200R022C00SPC500/MSDP-MIB.mib","nodes":[{"name":"msdpMIBobjects","oid":"msdpMIB.1","parentOid":"msdpMIB","children":[]}],"isParsed":true}
