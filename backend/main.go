@@ -134,9 +134,15 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("Server starting on 127.0.0.1:%s", port)
+	// 使用环境变量控制监听地址，Docker 环境需要 0.0.0.0
+	host := os.Getenv("HOST")
+	if host == "" {
+		host = "0.0.0.0"
+	}
+
+	log.Printf("Server starting on %s:%s", host, port)
 	log.Printf("API endpoints available at /api/*")
-	if err := r.Run("127.0.0.1:" + port); err != nil {
+	if err := r.Run(host + ":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
