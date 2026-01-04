@@ -17,7 +17,7 @@ const App: React.FC = () => {
   const [archives, setArchives] = useState<MibArchive[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [config, setConfig] = useState<SystemConfig>({
-    mibRootPath: '/etc/snmp/mibs',
+    mibRootPath: '/opt/mibs',
     defaultCommunity: 'public',
     enableAi: false
   });
@@ -43,7 +43,7 @@ const App: React.FC = () => {
         const [devicesData, archivesData, configData, quickOidsData] = await Promise.all([
           devicesApi.getAll().catch(() => []),
           mibApi.getArchives().catch(() => []),
-          configApi.get().catch(() => ({ mibRootPath: '/etc/snmp/mibs', defaultCommunity: 'public' })),
+          configApi.get().catch(() => ({ mibRootPath: '/opt/mibs', defaultCommunity: 'public' })),
           presetsApi.getQuickOIDs().catch(() => [])
         ]);
         setDevices(devicesData || []);
