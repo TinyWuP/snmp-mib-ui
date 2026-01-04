@@ -61,6 +61,23 @@ docker-compose up -d
 
 > 💡 已配置国内镜像加速（阿里云 Alpine + Go Proxy + npm 淘宝源）
 
+### 方式三：使用阿里云镜像
+
+已上传至阿里云容器镜像服务，可直接拉取使用：
+
+```bash
+# 使用阿里云镜像启动
+docker-compose -f docker-compose.yml up -d
+
+# 或手动拉取镜像
+docker pull registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest
+docker pull registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest
+```
+
+> 🚀 镜像信息
+> - **后端**: registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest (26.2MB)
+> - **前端**: registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest (54MB)
+
 ### 方式二：手动部署
 
 #### 环境要求
@@ -108,6 +125,24 @@ npm run dev
 
 ### 配置预览
 实时预览生成的配置文件，一键复制
+
+---
+
+## 🐳 Docker 镜像
+
+### 阿里云镜像（推荐国内用户）
+
+| 镜像 | 地址 | 大小 |
+|------|------|------|
+| 后端 | `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest` | 26.2MB |
+| 前端 | `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest` | 54MB |
+
+### Docker Hub
+
+| 镜像 | 地址 | 大小 |
+|------|------|------|
+| 后端 | `evans743/snmp-mib-explorer-pro-backend:latest` | 26.2MB |
+| 前端 | `evans743/snmp-mib-explorer-pro-frontend:latest` | 54MB |
 
 ---
 
