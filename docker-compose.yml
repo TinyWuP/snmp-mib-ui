@@ -8,9 +8,12 @@ version: '3.8'
 services:
   # 后端服务
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    # 使用阿里云镜像（推荐国内用户）
+    image: registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest
+    # 如果需要从本地构建，取消下面的注释并注释掉上面的 image
+    # build:
+    #   context: ./backend
+    #   dockerfile: Dockerfile
     container_name: snmp-mib-backend
     restart: unless-stopped
     env_file:
@@ -33,11 +36,14 @@ services:
 
   # 前端服务
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
+    # 使用阿里云镜像（推荐国内用户）
+    image: registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest
+    # 如果需要从本地构建，取消下面的注释并注释掉上面的 image
+    # build:
+    #   context: ./frontend
+    #   dockerfile: Dockerfile
+    #   args:
+    #     - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
     container_name: snmp-mib-frontend
     restart: unless-stopped
     env_file:
