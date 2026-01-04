@@ -404,7 +404,7 @@ const App: React.FC = () => {
                       <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-widest">
                         扫描结果 ({serverZipFiles.length})
                       </h4>
-                      {config.mibRootPath !== '/etc/snmp/mibs' && (
+                      {config.mibRootPath !== '/opt/mibs' && (
                         <button
                           onClick={() => {
                             // 返回上一级目录
