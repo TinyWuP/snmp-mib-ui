@@ -40,9 +40,10 @@ export const devicesApi = {
 
 // MIB Archives API
 export interface ServerZipFile {
+  type: 'file' | 'directory';
   name: string;
   path: string;
-  size: string;
+  size?: string;
 }
 
 export interface ScanResult {

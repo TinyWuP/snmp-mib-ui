@@ -57,8 +57,10 @@ services:
       - DATA_DIR=/app/data
       - TZ=${TZ:-Asia/Shanghai}
     volumes:
-      # 持久化数据库和 MIB 文件
+      # 持久化数据库和 MIB 文件（读写权限）
       - ${DATA_DIR:-./data}:/app/data
+      # 映射宿主机根目录（只读），用于扫描宿主机上的 ZIP 文件
+      - /:/host:ro
     networks:
       - snmp-network
     healthcheck:

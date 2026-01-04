@@ -773,8 +773,14 @@ func (h *Handler) ScanMibDirectory(c *gin.Context) {
 		path = h.mibPath
 	}
 
-	// Scan for zip files
-	var zipFiles []map[string]interface{}
+	// Convert absolute path to host-mounted path for Docker environment
+	// If path is an absolute path (starts with /) and not already /app, map it to /host
+	if strings.HasPrefix(path, "/") && !strings.HasPrefix(path, "/app") && !strings.HasPrefix(path, "/host") {
+		path = "/host" + path
+	}
+
+	// Scan for zip files and directories
+	var items []map[string]interface{}
 
 	entries, err := os.ReadDir(path)
 	if err != nil {
@@ -787,31 +793,39 @@ func (h *Handler) ScanMibDirectory(c *gin.Context) {
 	}
 
 	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
 		name := entry.Name()
-		if strings.HasSuffix(strings.ToLower(name), ".zip") {
+		fullPath := filepath.Join(path, name)
+
+		if entry.IsDir() {
+			// Add directory
+			items = append(items, map[string]interface{}{
+				"type": "directory",
+				"name": name,
+				"path": fullPath,
+			})
+		} else if strings.HasSuffix(strings.ToLower(name), ".zip") {
+			// Add zip file
 			info, _ := entry.Info()
 			size := int64(0)
 			if info != nil {
 				size = info.Size()
 			}
-			zipFiles = append(zipFiles, map[string]interface{}{
+			items = append(items, map[string]interface{}{
+				"type": "file",
 				"name": name,
-				"path": filepath.Join(path, name),
+				"path": fullPath,
 				"size": fmt.Sprintf("%.1f KB", float64(size)/1024),
 			})
 		}
 	}
 
-	if zipFiles == nil {
-		zipFiles = []map[string]interface{}{}
+	if items == nil {
+		items = []map[string]interface{}{}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"path":  path,
-		"files": zipFiles,
+		"files": items,
 	})
 }
 
@@ -830,15 +844,22 @@ func (h *Handler) ExtractFromPath(c *gin.Context) {
 		return
 	}
 
+	// Convert absolute path to host-mounted path for Docker environment
+	// If path is an absolute path (starts with /) and not already /app, map it to /host
+	actualPath := req.Path
+	if strings.HasPrefix(req.Path, "/") && !strings.HasPrefix(req.Path, "/app") && !strings.HasPrefix(req.Path, "/host") {
+		actualPath = "/host" + req.Path
+	}
+
 	// Check if file exists
-	info, err := os.Stat(req.Path)
+	info, err := os.Stat(actualPath)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "文件不存在: " + err.Error()})
 		return
 	}
 
 	// Extract and parse
-	archive, err := h.extractAndParseMib(req.Path, filepath.Base(req.Path), info.Size())
+	archive, err := h.extractAndParseMib(actualPath, filepath.Base(req.Path), info.Size())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "解析失败: " + err.Error()})
 		return

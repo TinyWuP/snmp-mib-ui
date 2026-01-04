@@ -397,23 +397,73 @@ const App: React.FC = () => {
                   {scanError && <p className="text-red-400 text-[10px] mt-2">{scanError}</p>}
                 </div>
 
-                {/* 服务器待解压的 ZIP 文件 */}
+                {/* 服务器扫描结果：文件夹和 ZIP 文件 */}
                 {serverZipFiles.length > 0 && (
                   <div className="p-4 border-b border-slate-900">
-                    <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-3">待解压 ({serverZipFiles.length})</h4>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {serverZipFiles.map((zipFile, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-amber-600/10 border border-amber-500/20 rounded-xl">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[11px] font-bold text-amber-400 truncate">{zipFile.name}</p>
-                            <p className="text-[10px] text-slate-500">{zipFile.size}</p>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-widest">
+                        扫描结果 ({serverZipFiles.length})
+                      </h4>
+                      {config.mibRootPath !== '/etc/snmp/mibs' && (
+                        <button
+                          onClick={() => {
+                            // 返回上一级目录
+                            const parentPath = config.mibRootPath.substring(0, config.mibRootPath.lastIndexOf('/'));
+                            const newPath = parentPath || '/';
+                            setConfig({...config, mibRootPath: newPath});
+                            handleScanDirectory();
+                          }}
+                          className="text-[10px] text-blue-400 hover:text-blue-300"
+                        >
+                          ← 返回上一级
+                        </button>
+                      )}
+                    </div>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {serverZipFiles.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                            item.type === 'directory'
+                              ? 'bg-blue-600/10 border-blue-500/20 hover:bg-blue-600/20 cursor-pointer'
+                              : 'bg-amber-600/10 border-amber-500/20'
+                          }`}
+                          onClick={() => {
+                            if (item.type === 'directory') {
+                              // 进入文件夹
+                              setConfig({...config, mibRootPath: item.path});
+                              handleScanDirectory();
+                            }
+                          }}
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            {item.type === 'directory' ? (
+                              <FolderIcon className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                            ) : (
+                              <FileIcon className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-[11px] font-bold truncate ${
+                                item.type === 'directory' ? 'text-blue-400' : 'text-amber-400'
+                              }`}>
+                                {item.name}
+                              </p>
+                              <p className="text-[10px] text-slate-500">
+                                {item.type === 'directory' ? '文件夹' : item.size}
+                              </p>
+                            </div>
                           </div>
-                          <button
-                            onClick={() => handleExtractFromPath(zipFile.path)}
-                            className="ml-2 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-[10px] font-bold"
-                          >
-                            解压
-                          </button>
+                          {item.type === 'file' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleExtractFromPath(item.path);
+                              }}
+                              className="ml-2 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-[10px] font-bold flex-shrink-0"
+                            >
+                              解压
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
