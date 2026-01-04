@@ -2,6 +2,39 @@
 # SNMP MIB Explorer Pro
 # Docker Compose 一键部署
 # ===================================
+#
+# 部署方式说明：
+# ---------------
+# 方式一：直接使用阿里云镜像（推荐国内用户）⭐
+#   - 优点：无需本地构建，拉取速度快，开箱即用
+#   - 默认配置：已配置好，直接执行 docker-compose up -d 即可
+#   - 镜像地址：
+#     * 后端: registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest
+#     * 前端: registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest
+#
+# 方式二：从本地源码构建镜像
+#   - 适用场景：需要自定义修改代码、调试或学习源码
+#   - 操作步骤：
+#     1. 注释掉 backend 和 frontend 服务中的 image 行
+#     2. 取消注释 build 配置部分
+#     3. 执行 docker-compose up -d --build
+#
+# 快速开始：
+# ---------
+# 1. 复制环境变量文件：cp .env.example .env
+# 2. 根据需要修改 .env 文件中的配置
+# 3. 启动服务：docker-compose up -d
+# 4. 访问应用：http://localhost:3000
+#
+# 常用命令：
+# ---------
+# - 查看日志：docker-compose logs -f
+# - 停止服务：docker-compose down
+# - 重启服务：docker-compose restart
+# - 更新镜像：docker-compose pull && docker-compose up -d
+# - 查看状态：docker-compose ps
+#
+# ===================================
 
 version: '3.8'
 

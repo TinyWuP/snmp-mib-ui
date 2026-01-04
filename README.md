@@ -69,14 +69,24 @@ SNMP MIB Explorer Pro 是一个专为网络运维工程师设计的可视化 SNM
 
 ### 方式一：Docker 一键部署（推荐）
 
-这是最简单快速的部署方式，适合大多数用户。
+这是最简单快速的部署方式，支持两种模式：
 
+#### 模式 A：直接使用阿里云镜像（推荐国内用户 ⭐）
+
+**适用场景：** 快速部署、生产环境、不想本地构建
+
+**优点：**
+- ✅ 无需本地构建，开箱即用
+- ✅ 阿里云镜像源，国内访问速度快
+- ✅ 镜像经过优化，体积小（后端 26.2MB，前端 54MB）
+
+**步骤：**
 ```bash
 # 1. 克隆项目
 git clone https://github.com/Oumu33/snmp-mib-ui.git
 cd snmp-mib-ui
 
-# 2. 一键启动（自动使用阿里云镜像）
+# 2. 一键启动（默认使用阿里云镜像）
 docker-compose up -d
 
 # 3. 查看服务状态
@@ -106,11 +116,39 @@ docker-compose restart
 docker-compose pull && docker-compose up -d
 ```
 
-> 🚀 **已配置阿里云镜像源，无需手动拉取，国内用户访问速度更快！**
->
-> 镜像信息：
-> - **后端**: `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest` (26.2MB)
-> - **前端**: `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest` (54MB)
+**镜像信息：**
+- **后端**: `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest` (26.2MB)
+- **前端**: `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest` (54MB)
+
+#### 模式 B：从本地源码构建镜像
+
+**适用场景：** 需要自定义修改代码、调试或学习源码
+
+**步骤：**
+```bash
+# 1. 克隆项目
+git clone https://github.com/Oumu33/snmp-mib-ui.git
+cd snmp-mib-ui
+
+# 2. 修改 docker-compose.yml
+# 注释掉 backend 和 frontend 服务中的 image 行
+# 取消注释 build 配置部分
+
+# 3. 构建并启动
+docker-compose up -d --build
+
+# 4. 访问应用
+# 浏览器打开 http://localhost:3000
+```
+
+**详细说明：**
+1. 打开 `docker-compose.yml`
+2. 找到 `backend` 服务，注释掉 `image: registry.cn-hangzhou.aliyuncs.com/...` 行
+3. 取消注释 `build:` 配置部分
+4. 对 `frontend` 服务重复上述操作
+5. 执行 `docker-compose up -d --build` 开始构建
+
+> 💡 **提示**：本地构建需要较长时间，建议使用模式 A（直接使用镜像）
 
 ### 方式二：手动部署
 
