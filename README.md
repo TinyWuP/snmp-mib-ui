@@ -53,28 +53,15 @@
 git clone https://github.com/Oumu33/snmp-mib-ui.git
 cd snmp-mib-ui
 
-# 一键启动
+# 一键启动（自动使用阿里云镜像）
 docker-compose up -d
 
 # 访问 http://localhost:3000
 ```
 
-> 💡 已配置国内镜像加速（阿里云 Alpine + Go Proxy + npm 淘宝源）
-
-### 方式三：使用阿里云镜像
-
-已上传至阿里云容器镜像服务，可直接拉取使用：
-
-```bash
-# 使用阿里云镜像启动
-docker-compose -f docker-compose.yml up -d
-
-# 或手动拉取镜像
-docker pull registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest
-docker pull registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest
-```
-
-> 🚀 镜像信息
+> 🚀 已配置阿里云镜像源，无需手动拉取，国内用户访问速度更快！
+>
+> 镜像信息：
 > - **后端**: registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest (26.2MB)
 > - **前端**: registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest (54MB)
 
@@ -130,14 +117,14 @@ npm run dev
 
 ## 🐳 Docker 镜像
 
-### 阿里云镜像（推荐国内用户）
+### 阿里云镜像（推荐国内用户 ⭐）
 
 | 镜像 | 地址 | 大小 |
 |------|------|------|
 | 后端 | `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest` | 26.2MB |
 | 前端 | `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest` | 54MB |
 
-### Docker Hub
+### Docker Hub（国际用户）
 
 | 镜像 | 地址 | 大小 |
 |------|------|------|
