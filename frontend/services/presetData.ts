@@ -86,3 +86,95 @@ export const QUICK_OIDS = [
   { name: '内存空闲率', oid: '1.3.6.1.4.1.2021.4.11', vendor: 'Linux/Net-SNMP' },
   { name: '设备序列号', oid: '1.3.6.1.2.1.47.1.1.1.1.11', vendor: 'Entity-MIB' }
 ];
+
+// OID 分类 - 用于智能推荐
+export interface OidCategory {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  keywords: string[]; // 用于匹配的关键词
+  color: string;
+}
+
+export const OID_CATEGORIES: OidCategory[] = [
+  {
+    id: 'cpu',
+    name: 'CPU 性能',
+    icon: 'cpu',
+    description: '处理器使用率、负载、核心数等',
+    keywords: ['cpu', 'processor', 'load', 'core', 'usage', 'utilization', 'cpmCPUTotal', 'hrProcessor'],
+    color: 'text-red-500'
+  },
+  {
+    id: 'memory',
+    name: '内存',
+    icon: 'memory',
+    description: '内存使用率、可用内存、交换空间',
+    keywords: ['memory', 'ram', 'swap', 'buffer', 'cache', 'mem', 'storage', 'hrStorage', 'ciscoMemoryPool'],
+    color: 'text-amber-500'
+  },
+  {
+    id: 'network',
+    name: '网络接口',
+    icon: 'network',
+    description: '接口流量、错误率、连接状态',
+    keywords: ['interface', 'if', 'port', 'ethernet', 'vlan', 'link', 'packet', 'byte', 'ifTable', 'ifXTable', 'etherStats'],
+    color: 'text-blue-500'
+  },
+  {
+    id: 'routing',
+    name: '路由',
+    icon: 'routing',
+    description: '路由表、ARP 表、邻居状态',
+    keywords: ['route', 'routing', 'arp', 'neighbor', 'bgp', 'ospf', 'ipRoute', 'ipNetToMedia', 'bgpPeer'],
+    color: 'text-emerald-500'
+  },
+  {
+    id: 'system',
+    name: '系统信息',
+    icon: 'system',
+    description: '设备描述、运行时间、序列号',
+    keywords: ['system', 'sys', 'uptime', 'serial', 'model', 'version', 'description', 'sysDescr', 'sysUpTime', 'entPhysical'],
+    color: 'text-purple-500'
+  },
+  {
+    id: 'environment',
+    name: '环境监控',
+    icon: 'environment',
+    description: '温度、风扇、电源状态',
+    keywords: ['temperature', 'temp', 'fan', 'power', 'voltage', 'env', 'ciscoEnvMon', 'entitySensor'],
+    color: 'text-orange-500'
+  },
+  {
+    id: 'storage',
+    name: '存储',
+    icon: 'storage',
+    description: '磁盘使用率、文件系统、分区',
+    keywords: ['disk', 'storage', 'filesystem', 'partition', 'hrStorage', 'dskTable'],
+    color: 'text-cyan-500'
+  },
+  {
+    id: 'security',
+    name: '安全',
+    icon: 'security',
+    description: 'ACL、防火墙、认证状态',
+    keywords: ['acl', 'firewall', 'security', 'auth', 'login', 'user', 'aaa', 'ipAccessControl'],
+    color: 'text-rose-500'
+  }
+];
+
+// 根据关键词匹配 OID 分类
+export function matchCategory(nodeName: string, nodeDescription?: string): string | null {
+  const searchText = `${nodeName} ${nodeDescription || ''}`.toLowerCase();
+
+  for (const category of OID_CATEGORIES) {
+    for (const keyword of category.keywords) {
+      if (searchText.includes(keyword.toLowerCase())) {
+        return category.id;
+      }
+    }
+  }
+
+  return null;
+}

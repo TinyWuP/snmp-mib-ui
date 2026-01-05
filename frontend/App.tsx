@@ -34,6 +34,12 @@ const App: React.FC = () => {
   const [loadedArchiveFiles, setLoadedArchiveFiles] = useState<MibFile[]>([]);
   const [isParsing, setIsParsing] = useState(false);
 
+  // 搜索相关状态
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<MibNode[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
   const archiveInputRef = useRef<HTMLInputElement>(null);
 
   // Load data from backend on mount
@@ -222,6 +228,103 @@ const App: React.FC = () => {
     }
   };
 
+  // 搜索 OID - 递归搜索所有节点
+  const searchNodes = (nodes: MibNode[], query: string): MibNode[] => {
+    const results: MibNode[] = [];
+    const lowerQuery = query.toLowerCase();
+
+    nodes.forEach(node => {
+      // 检查当前节点是否匹配
+      const nameMatch = node.name.toLowerCase().includes(lowerQuery);
+      const oidMatch = node.oid.toLowerCase().includes(lowerQuery);
+      const descMatch = node.description?.toLowerCase().includes(lowerQuery);
+      const syntaxMatch = node.syntax?.toLowerCase().includes(lowerQuery);
+
+      if (nameMatch || oidMatch || descMatch || syntaxMatch) {
+        results.push(node);
+      }
+
+      // 递归搜索子节点
+      if (node.children && node.children.length > 0) {
+        const childResults = searchNodes(node.children, query);
+        results.push(...childResults);
+      }
+    });
+
+    return results;
+  };
+
+  // 处理搜索
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+
+    if (query.length < 2) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setShowSearchResults(true);
+
+    try {
+      // 从所有已解析的 MIB 文件中搜索
+      const allResults: MibNode[] = [];
+
+      // 搜索已加载的文件
+      for (const file of loadedArchiveFiles) {
+        if (file.nodes && file.nodes.length > 0) {
+          const results = searchNodes(file.nodes, query);
+          allResults.push(...results);
+        }
+      }
+
+      // 如果结果太少，尝试解析其他文件
+      if (allResults.length < 5) {
+        for (const archive of archives) {
+          try {
+            const detail = await mibApi.getArchiveDetail(archive.id);
+            for (const file of detail.files || []) {
+              if (!file.isParsed) {
+                try {
+                  const parsed = await mibApi.parseFile(file.path);
+                  const results = searchNodes(parsed.nodes, query);
+                  allResults.push(...results);
+                } catch (err) {
+                  console.error('Failed to parse file during search:', err);
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Failed to get archive detail:', err);
+          }
+        }
+      }
+
+      // 去重
+      const uniqueResults = allResults.filter((node, index, self) =>
+        index === self.findIndex(n => n.oid === node.oid)
+      );
+
+      setSearchResults(uniqueResults.slice(0, 20)); // 限制结果数量
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // 选择搜索结果
+  const handleSelectSearchResult = (node: MibNode) => {
+    setSelectedNode(node);
+    setShowSearchResults(false);
+    setSearchQuery('');
+    // 如果在 MIB 库视图，可以导航到对应的文件
+    if (activeView === 'mibs') {
+      // 可以在这里添加逻辑来高亮显示选中的节点
+    }
+  };
+
   return (
     <div className="flex h-screen bg-[#020617] text-slate-200 overflow-hidden font-sans">
       {/* 侧边导航 */}
@@ -249,9 +352,98 @@ const App: React.FC = () => {
             </button>
           ))}
         </div>
+        {/* 搜索按钮 */}
+        <div className="mt-auto relative">
+          <button
+            onClick={() => {
+              const searchInput = document.getElementById('global-search') as HTMLInputElement;
+              searchInput?.focus();
+            }}
+            className="p-3.5 rounded-2xl transition-all relative group hover:bg-white/5 text-slate-600 hover:text-slate-400"
+          >
+            <SearchIcon className="w-6 h-6" />
+            <div className="absolute left-full ml-4 px-3 py-2 bg-slate-900 text-[10px] font-black uppercase tracking-widest rounded-xl opacity-0 group-hover:opacity-100 whitespace-nowrap z-50 shadow-2xl border border-slate-800 transition-all">
+              全局搜索
+            </div>
+          </button>
+        </div>
       </nav>
 
       <main className="flex-1 flex overflow-hidden relative">
+        {/* 全局搜索框 */}
+        <div className="absolute top-4 right-4 z-40 w-96">
+          <div className="relative">
+            <input
+              id="global-search"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="搜索 OID 名称、描述、语法..."
+              className="w-full bg-black/80 backdrop-blur-xl border border-slate-800 rounded-2xl px-5 py-3 text-sm text-white placeholder-slate-600 focus:border-blue-500 outline-none shadow-2xl transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSearchResults([]);
+                  setShowSearchResults(false);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white transition-colors"
+              >
+                <XCircleIcon className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {/* 搜索结果下拉框 */}
+          {showSearchResults && searchResults.length > 0 && (
+            <div className="absolute top-full mt-2 w-full bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50 max-h-96 overflow-y-auto">
+              <div className="p-3 border-b border-slate-800">
+                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
+                  找到 {searchResults.length} 个结果
+                </span>
+              </div>
+              {searchResults.map((node, index) => (
+                <div
+                  key={`${node.oid}-${index}`}
+                  onClick={() => handleSelectSearchResult(node)}
+                  className="p-4 hover:bg-blue-600/10 cursor-pointer transition-all border-b border-slate-800/50 last:border-0"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-bold text-blue-400">{node.name}</span>
+                    <code className="text-xs text-slate-600 font-mono">{node.oid}</code>
+                  </div>
+                  {node.description && (
+                    <p className="text-xs text-slate-500 truncate">{node.description}</p>
+                  )}
+                  {node.syntax && (
+                    <span className="text-[10px] text-slate-700 font-mono mt-1 inline-block bg-slate-800 px-2 py-0.5 rounded">
+                      {node.syntax}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {showSearchResults && searchResults.length === 0 && searchQuery.length >= 2 && (
+            <div className="absolute top-full mt-2 w-full bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50 p-6 text-center">
+              {isSearching ? (
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-4 h-4 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+                  <span className="text-sm text-slate-500">搜索中...</span>
+                </div>
+              ) : (
+                <div>
+                  <SearchIcon className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                  <p className="text-sm text-slate-600">未找到匹配的 OID</p>
+                  <p className="text-xs text-slate-700 mt-1">尝试其他关键词</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {activeView === 'dashboard' && (
           <div className="flex-1 p-16 overflow-y-auto bg-gradient-to-br from-blue-600/5 to-transparent">
             <div className="max-w-6xl mx-auto">

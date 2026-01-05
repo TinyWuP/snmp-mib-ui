@@ -36,6 +36,18 @@ const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({ devices, basket, arch
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>([]);
   const [selectedScraper, setSelectedScraper] = useState<'prometheus' | 'vmagent' | null>(null);
 
+  // 配置验证相关状态
+  const [validationResults, setValidationResults] = useState<{
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+    suggestions: string[];
+    oidCount: number;
+    estimatedOverhead: string;
+  } | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
+
   // SNMP Exporter 8步，其他 6步
   const totalSteps = collector === 'snmp-exporter' ? 8 : 6;
 
@@ -218,6 +230,132 @@ const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({ devices, basket, arch
     vmagent += `        replacement: snmp-exporter:9116  # SNMP Exporter 服务地址，K8s/Docker 环境使用服务名\n`;
 
     return { prometheus, vmagent };
+  };
+
+  // 配置验证函数
+  const validateConfig = (config: string, collector: CollectorType) => {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    const suggestions: string[] = [];
+
+    // 1. 检查 YAML 语法（简单检查）
+    const lines = config.split('\n');
+    let indentLevel = 0;
+    let inModules = false;
+    let oidCount = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      // 跳过注释和空行
+      if (!trimmed || trimmed.startsWith('#')) continue;
+
+      // 计算缩进
+      const indent = line.search(/\S|$/);
+      const currentIndentLevel = Math.floor(indent / 2);
+
+      // 检查缩进一致性
+      if (currentIndentLevel > indentLevel + 1) {
+        errors.push(`第 ${i + 1} 行：缩进不一致，可能导致 YAML 解析错误`);
+      }
+      indentLevel = currentIndentLevel;
+
+      // 检查冒号
+      if (trimmed.includes(':') && !trimmed.endsWith(':')) {
+        const colonIndex = trimmed.indexOf(':');
+        const afterColon = trimmed.substring(colonIndex + 1).trim();
+        if (afterColon && !afterColon.startsWith('#') && !afterColon.startsWith('"') && !afterColon.startsWith("'")) {
+          // 检查值是否有效
+        }
+      }
+
+      // 统计 OID 数量
+      if (trimmed.match(/^\s*-\s*\d+\.\d+/)) {
+        oidCount++;
+      }
+
+      // 检查模块结构
+      if (trimmed.startsWith('modules:')) {
+        inModules = true;
+      }
+    }
+
+    // 2. 检查重复 OID
+    const oidPattern = /\d+\.\d+\.\d+(?:\.\d+)*/g;
+    const oids = config.match(oidPattern) || [];
+    const uniqueOids = new Set(oids);
+    if (oids.length !== uniqueOids.size) {
+      warnings.push(`发现 ${oids.length - uniqueOids.size} 个重复的 OID，可能导致重复采集`);
+    }
+
+    // 3. 检查采集器特定配置
+    if (collector === 'snmp-exporter') {
+      if (!config.includes('modules:')) {
+        errors.push('缺少 modules 配置');
+      }
+      if (!config.includes('walk:')) {
+        warnings.push('未定义 walk 指标，可能无法采集任何数据');
+      }
+      if (!config.includes('metrics:')) {
+        warnings.push('未定义 metrics 映射，指标名称可能不友好');
+      }
+    } else if (collector === 'telegraf' || collector === 'categraf') {
+      if (!config.includes('agents')) {
+        errors.push('缺少 agents 配置');
+      }
+      if (!config.includes('community')) {
+        warnings.push('未配置 community 字符串，可能无法连接设备');
+      }
+    }
+
+    // 4. 性能评估
+    const estimatedOverhead = oidCount > 50 ? '高' : oidCount > 20 ? '中' : '低';
+    if (oidCount > 100) {
+      warnings.push(`采集 OID 数量较多（${oidCount} 个），可能影响采集性能`);
+      suggestions.push('考虑拆分为多个采集任务，或增加采集间隔');
+    }
+
+    // 5. 最佳实践建议
+    if (!config.includes('scrape_interval') && !config.includes('interval')) {
+      suggestions.push('建议配置采集间隔（scrape_interval/interval）');
+    }
+    if (!config.includes('timeout') && !config.includes('timeout')) {
+      suggestions.push('建议配置超时时间（timeout），避免长时间阻塞');
+    }
+    if (collector === 'snmp-exporter' && !config.includes('auth:')) {
+      suggestions.push('建议配置认证信息（auth），提高安全性');
+    }
+
+    // 6. 检查设备配置
+    const devicePattern = /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g;
+    const deviceIPs = config.match(devicePattern) || [];
+    if (deviceIPs.length === 0) {
+      warnings.push('配置中未发现设备 IP 地址，请确认是否正确配置');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings,
+      suggestions,
+      oidCount: uniqueOids.size,
+      estimatedOverhead
+    };
+  };
+
+  const handleValidateConfig = () => {
+    if (!configCode || !collector) return;
+
+    setIsValidating(true);
+    setShowValidation(true);
+
+    // 模拟异步验证
+    setTimeout(() => {
+      const results = validateConfig(configCode, collector);
+      setValidationResults(results);
+      setIsValidating(false);
+    }, 500);
   };
 
   // 本地配置生成（带设备信息）
@@ -593,11 +731,109 @@ const ConfigGenerator: React.FC<ConfigGeneratorProps> = ({ devices, basket, arch
                    >
                      <ClipboardIcon className="w-4 h-4" /> 复制
                    </button>
+                   <button
+                     onClick={handleValidateConfig}
+                     disabled={isValidating}
+                     className="px-8 py-5 bg-amber-600 text-white rounded-3xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-amber-500 transition-all flex items-center gap-3"
+                   >
+                     {isValidating ? (
+                       <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                     ) : (
+                       <CheckCircleIcon className="w-4 h-4" />
+                     )}
+                     验证配置
+                   </button>
                    <button onClick={next} className="px-8 py-5 bg-blue-600 text-white rounded-3xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-blue-500 transition-all">
                       下一步：选择采集器
                    </button>
                 </div>
              </div>
+
+             {/* 验证结果显示 */}
+             {showValidation && validationResults && (
+               <div className="mb-6 bg-slate-900/40 border border-slate-800 rounded-3xl p-6 animate-in slide-in-from-top-4">
+                  <div className="flex items-center justify-between mb-4">
+                     <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-3">
+                        {validationResults.isValid ? (
+                           <span className="text-emerald-500">✓ 配置验证通过</span>
+                        ) : (
+                           <span className="text-red-500">✕ 配置存在问题</span>
+                        )}
+                     </h3>
+                     <button onClick={() => setShowValidation(false)} className="text-slate-600 hover:text-white transition-colors">
+                        <XCircleIcon className="w-5 h-5" />
+                     </button>
+                  </div>
+
+                  {/* 统计信息 */}
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                     <div className="bg-black/40 rounded-2xl p-4 text-center">
+                        <p className="text-2xl font-black text-white">{validationResults.oidCount}</p>
+                        <p className="text-[10px] text-slate-600 uppercase tracking-widest mt-1">OID 数量</p>
+                     </div>
+                     <div className="bg-black/40 rounded-2xl p-4 text-center">
+                        <p className={`text-2xl font-black ${
+                           validationResults.estimatedOverhead === '低' ? 'text-emerald-500' :
+                           validationResults.estimatedOverhead === '中' ? 'text-amber-500' :
+                           'text-red-500'
+                        }`}>
+                           {validationResults.estimatedOverhead}
+                        </p>
+                        <p className="text-[10px] text-slate-600 uppercase tracking-widest mt-1">预估开销</p>
+                     </div>
+                     <div className="bg-black/40 rounded-2xl p-4 text-center">
+                        <p className={`text-2xl font-black ${
+                           validationResults.errors.length === 0 ? 'text-emerald-500' : 'text-red-500'
+                        }`}>
+                           {validationResults.errors.length}
+                        </p>
+                        <p className="text-[10px] text-slate-600 uppercase tracking-widest mt-1">错误数</p>
+                     </div>
+                  </div>
+
+                  {/* 错误 */}
+                  {validationResults.errors.length > 0 && (
+                     <div className="mb-4">
+                        <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-2">错误</p>
+                        <div className="space-y-2">
+                           {validationResults.errors.map((error, idx) => (
+                              <div key={idx} className="bg-red-600/10 border border-red-500/20 rounded-xl p-3 text-xs text-red-400">
+                                 {error}
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                  )}
+
+                  {/* 警告 */}
+                  {validationResults.warnings.length > 0 && (
+                     <div className="mb-4">
+                        <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-2">警告</p>
+                        <div className="space-y-2">
+                           {validationResults.warnings.map((warning, idx) => (
+                              <div key={idx} className="bg-amber-600/10 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-400">
+                                 {warning}
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                  )}
+
+                  {/* 建议 */}
+                  {validationResults.suggestions.length > 0 && (
+                     <div>
+                        <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2">建议</p>
+                        <div className="space-y-2">
+                           {validationResults.suggestions.map((suggestion, idx) => (
+                              <div key={idx} className="bg-blue-600/10 border border-blue-500/20 rounded-xl p-3 text-xs text-blue-400">
+                                 {suggestion}
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                  )}
+               </div>
+             )}
              <div className="flex-1 bg-black/60 border border-slate-800 rounded-[60px] overflow-hidden flex relative shadow-inner">
                 <div className="w-20 bg-white/[0.01] border-r border-slate-900 py-12 flex flex-col items-center text-[10px] font-mono text-slate-800">
                    {configCode.split('\n').map((_, i) => <div key={i} className="leading-8 h-8">{i+1}</div>)}
