@@ -65,6 +65,42 @@ SNMP MIB Explorer Pro 是一个专为网络运维工程师设计的可视化 SNM
 
 ---
 
+## 🖼️ 界面预览
+
+### MIB 目录扫描
+![MIB 目录扫描](images/01-mib-directory.png)
+扫描服务器上的 MIB 文件目录，查看已解析的品牌包和 MIB 文件数量。
+
+### OID 树详情
+![OID 树详情](images/02-oid-tree-details.png)
+树形结构展示 MIB 文件，点击展开查看 OID 节点，显示详细信息。
+
+### 配置生成向导
+![配置生成向导](images/03-config-wizard.png)
+选择采集引擎，支持 SNMP Exporter、Telegraf、Categraf 等多种采集引擎。
+
+### 版本选择
+![版本选择](images/04-version-selection.png)
+自动探测最新 RELEASE 版本，支持手动选择版本。
+
+### 品牌包选择
+![品牌包选择](images/05-brand-package.png)
+选择已上传的品牌包，显示包内 MIB 文件数量。
+
+### 指标选择
+![指标选择](images/06-metrics-selection.png)
+在 MIB 文件中浏览和选择需要采集的 OID 指标。
+
+### SNMP 配置生成
+![SNMP 配置生成](images/07-snmp-yml-config.png)
+生成 snmp.yml 配置文件，支持预览和复制。
+
+### 采集器选择
+![采集器选择](images/08-collector-selection.png)
+选择监控系统类型，生成对应的采集配置（Prometheus、VMAgent 等）。
+
+---
+
 ## 🛠️ 快速开始
 
 ### 方式一：Docker 一键部署（推荐）
