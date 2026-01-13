@@ -1,0 +1,563 @@
+basePath: /api
+definitions:
+  handler.SnmpGetRequest:
+    properties:
+      deviceId:
+        type: string
+      oids:
+        items:
+          type: string
+        type: array
+    type: object
+  handler.SnmpWalkRequest:
+    properties:
+      deviceId:
+        type: string
+      oid:
+        type: string
+    type: object
+  model.Device:
+    properties:
+      authPassword:
+        type: string
+      authProtocol:
+        type: string
+      community:
+        type: string
+      createdAt:
+        type: integer
+      id:
+        type: string
+      ip:
+        type: string
+      name:
+        type: string
+      port:
+        type: integer
+      privPassword:
+        type: string
+      privProtocol:
+        type: string
+      securityLevel:
+        type: string
+      securityName:
+        type: string
+      version:
+        description: v1, v2c, v3
+        type: string
+    type: object
+  model.MibArchive:
+    properties:
+      extractedPath:
+        type: string
+      fileCount:
+        description: Only store count, not content
+        type: integer
+      fileName:
+        type: string
+      files:
+        description: Loaded on demand, not stored in DB
+        items:
+          $ref: '#/definitions/model.MibFile'
+        type: array
+      id:
+        type: string
+      size:
+        type: string
+      status:
+        type: string
+      timestamp:
+        type: integer
+    type: object
+  model.MibFile:
+    properties:
+      id:
+        type: string
+      isParsed:
+        type: boolean
+      name:
+        type: string
+      nodes:
+        description: Loaded on demand from .meta.json file
+        items:
+          $ref: '#/definitions/model.MibNode'
+        type: array
+      path:
+        type: string
+    type: object
+  model.MibNode:
+    properties:
+      access:
+        type: string
+      children:
+        items:
+          $ref: '#/definitions/model.MibNode'
+        type: array
+      description:
+        type: string
+      name:
+        type: string
+      oid:
+        type: string
+      parentOid:
+        type: string
+      status:
+        type: string
+      syntax:
+        type: string
+      type:
+        type: string
+    type: object
+  model.SystemConfig:
+    properties:
+      defaultCommunity:
+        type: string
+      mibRootPath:
+        type: string
+    type: object
+  service.DeviceInfo:
+    properties:
+      community:
+        type: string
+      ip:
+        type: string
+      name:
+        type: string
+      port:
+        type: integer
+      version:
+        type: string
+    type: object
+  service.GenerateConfigRequest:
+    properties:
+      collector:
+        description: snmp-exporter, telegraf, categraf
+        type: string
+      community:
+        type: string
+      devices:
+        description: Selected devices for telegraf/categraf
+        items:
+          $ref: '#/definitions/service.DeviceInfo'
+        type: array
+      mibRoot:
+        type: string
+      nodes:
+        items:
+          $ref: '#/definitions/model.MibNode'
+        type: array
+      version:
+        type: string
+    type: object
+  service.ValidationResult:
+    properties:
+      errors:
+        items:
+          type: string
+        type: array
+      isValid:
+        type: boolean
+      warnings:
+        items:
+          type: string
+        type: array
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: oumu33@github.com
+    name: API Support
+    url: https://github.com/Oumu33/snmp-mib-ui/issues
+  description: SNMP MIB Explorer Pro 是一个专为网络运维工程师设计的可视化 SNMP 监控配置生成工具。
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: SNMP MIB Explorer Pro API
+  version: 2.0.0
+paths:
+  /config:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前系统的配置信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SystemConfig'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 获取系统配置
+      tags:
+      - config
+    put:
+      consumes:
+      - application/json
+      description: 更新系统的配置信息
+      parameters:
+      - description: 配置信息
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/model.SystemConfig'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SystemConfig'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 更新系统配置
+      tags:
+      - config
+  /devices:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统中所有已配置的 SNMP 设备列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Device'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 获取所有设备
+      tags:
+      - devices
+    post:
+      consumes:
+      - application/json
+      description: 添加一个新的 SNMP 设备到系统中
+      parameters:
+      - description: 设备信息
+        in: body
+        name: device
+        required: true
+        schema:
+          $ref: '#/definitions/model.Device'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Device'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 创建新设备
+      tags:
+      - devices
+  /devices/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据设备 ID 删除指定的 SNMP 设备
+      parameters:
+      - description: 设备 ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 删除设备
+      tags:
+      - devices
+  /devices/batch:
+    post:
+      consumes:
+      - application/json
+      description: 一次性添加多个 SNMP 设备到系统中
+      parameters:
+      - description: 设备列表
+        in: body
+        name: devices
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Device'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/model.Device'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 批量创建设备
+      tags:
+      - devices
+  /mib/archives:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统中所有已上传的 MIB 归档文件列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.MibArchive'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 获取所有 MIB 归档
+      tags:
+      - mib
+  /mib/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传一个包含 MIB 文件的 ZIP 压缩包
+      parameters:
+      - description: MIB ZIP 文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.MibArchive'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 上传 MIB 文件
+      tags:
+      - mib
+  /snmp/get:
+    post:
+      consumes:
+      - application/json
+      description: 对指定设备执行 SNMP GET 操作，获取一个或多个 OID 的值
+      parameters:
+      - description: SNMP GET 请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SnmpGetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties:
+                type: string
+              type: object
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: SNMP GET 操作
+      tags:
+      - snmp
+  /snmp/test:
+    post:
+      consumes:
+      - application/json
+      description: 测试与指定 SNMP 设备的连接是否正常
+      parameters:
+      - description: 设备信息
+        in: body
+        name: device
+        required: true
+        schema:
+          $ref: '#/definitions/model.Device'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 测试 SNMP 连接
+      tags:
+      - snmp
+  /snmp/walk:
+    post:
+      consumes:
+      - application/json
+      description: 对指定设备执行 SNMP WALK 操作，遍历指定 OID 树下的所有节点
+      parameters:
+      - description: SNMP WALK 请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SnmpWalkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties:
+                type: string
+              type: object
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: SNMP WALK 操作
+      tags:
+      - snmp
+  /validate/config:
+    post:
+      consumes:
+      - application/json
+      description: 在生成配置前验证配置参数，检查重复 OID、格式错误等
+      parameters:
+      - description: 配置验证请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.GenerateConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.ValidationResult'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 验证配置
+      tags:
+      - generator
+securityDefinitions:
+  Bearer:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

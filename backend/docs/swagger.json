@@ -1,0 +1,852 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "SNMP MIB Explorer Pro 是一个专为网络运维工程师设计的可视化 SNMP 监控配置生成工具。",
+        "title": "SNMP MIB Explorer Pro API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "https://github.com/Oumu33/snmp-mib-ui/issues",
+            "email": "oumu33@github.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "2.0.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api",
+    "paths": {
+        "/config": {
+            "get": {
+                "description": "获取当前系统的配置信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "获取系统配置",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SystemConfig"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "更新系统的配置信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "更新系统配置",
+                "parameters": [
+                    {
+                        "description": "配置信息",
+                        "name": "config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SystemConfig"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SystemConfig"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/devices": {
+            "get": {
+                "description": "获取系统中所有已配置的 SNMP 设备列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "devices"
+                ],
+                "summary": "获取所有设备",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Device"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "添加一个新的 SNMP 设备到系统中",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "devices"
+                ],
+                "summary": "创建新设备",
+                "parameters": [
+                    {
+                        "description": "设备信息",
+                        "name": "device",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Device"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.Device"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/devices/batch": {
+            "post": {
+                "description": "一次性添加多个 SNMP 设备到系统中",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "devices"
+                ],
+                "summary": "批量创建设备",
+                "parameters": [
+                    {
+                        "description": "设备列表",
+                        "name": "devices",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Device"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Device"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/devices/{id}": {
+            "delete": {
+                "description": "根据设备 ID 删除指定的 SNMP 设备",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "devices"
+                ],
+                "summary": "删除设备",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "设备 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/mib/archives": {
+            "get": {
+                "description": "获取系统中所有已上传的 MIB 归档文件列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mib"
+                ],
+                "summary": "获取所有 MIB 归档",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.MibArchive"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/mib/upload": {
+            "post": {
+                "description": "上传一个包含 MIB 文件的 ZIP 压缩包",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mib"
+                ],
+                "summary": "上传 MIB 文件",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "MIB ZIP 文件",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.MibArchive"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/snmp/get": {
+            "post": {
+                "description": "对指定设备执行 SNMP GET 操作，获取一个或多个 OID 的值",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "snmp"
+                ],
+                "summary": "SNMP GET 操作",
+                "parameters": [
+                    {
+                        "description": "SNMP GET 请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.SnmpGetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/snmp/test": {
+            "post": {
+                "description": "测试与指定 SNMP 设备的连接是否正常",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "snmp"
+                ],
+                "summary": "测试 SNMP 连接",
+                "parameters": [
+                    {
+                        "description": "设备信息",
+                        "name": "device",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Device"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/snmp/walk": {
+            "post": {
+                "description": "对指定设备执行 SNMP WALK 操作，遍历指定 OID 树下的所有节点",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "snmp"
+                ],
+                "summary": "SNMP WALK 操作",
+                "parameters": [
+                    {
+                        "description": "SNMP WALK 请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.SnmpWalkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/validate/config": {
+            "post": {
+                "description": "在生成配置前验证配置参数，检查重复 OID、格式错误等",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "generator"
+                ],
+                "summary": "验证配置",
+                "parameters": [
+                    {
+                        "description": "配置验证请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.GenerateConfigRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.ValidationResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handler.SnmpGetRequest": {
+            "type": "object",
+            "properties": {
+                "deviceId": {
+                    "type": "string"
+                },
+                "oids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "handler.SnmpWalkRequest": {
+            "type": "object",
+            "properties": {
+                "deviceId": {
+                    "type": "string"
+                },
+                "oid": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Device": {
+            "type": "object",
+            "properties": {
+                "authPassword": {
+                    "type": "string"
+                },
+                "authProtocol": {
+                    "type": "string"
+                },
+                "community": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "ip": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "integer"
+                },
+                "privPassword": {
+                    "type": "string"
+                },
+                "privProtocol": {
+                    "type": "string"
+                },
+                "securityLevel": {
+                    "type": "string"
+                },
+                "securityName": {
+                    "type": "string"
+                },
+                "version": {
+                    "description": "v1, v2c, v3",
+                    "type": "string"
+                }
+            }
+        },
+        "model.MibArchive": {
+            "type": "object",
+            "properties": {
+                "extractedPath": {
+                    "type": "string"
+                },
+                "fileCount": {
+                    "description": "Only store count, not content",
+                    "type": "integer"
+                },
+                "fileName": {
+                    "type": "string"
+                },
+                "files": {
+                    "description": "Loaded on demand, not stored in DB",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.MibFile"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.MibFile": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "isParsed": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nodes": {
+                    "description": "Loaded on demand from .meta.json file",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.MibNode"
+                    }
+                },
+                "path": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.MibNode": {
+            "type": "object",
+            "properties": {
+                "access": {
+                    "type": "string"
+                },
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.MibNode"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "oid": {
+                    "type": "string"
+                },
+                "parentOid": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "syntax": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SystemConfig": {
+            "type": "object",
+            "properties": {
+                "defaultCommunity": {
+                    "type": "string"
+                },
+                "mibRootPath": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.DeviceInfo": {
+            "type": "object",
+            "properties": {
+                "community": {
+                    "type": "string"
+                },
+                "ip": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.GenerateConfigRequest": {
+            "type": "object",
+            "properties": {
+                "collector": {
+                    "description": "snmp-exporter, telegraf, categraf",
+                    "type": "string"
+                },
+                "community": {
+                    "type": "string"
+                },
+                "devices": {
+                    "description": "Selected devices for telegraf/categraf",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/service.DeviceInfo"
+                    }
+                },
+                "mibRoot": {
+                    "type": "string"
+                },
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.MibNode"
+                    }
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.ValidationResult": {
+            "type": "object",
+            "properties": {
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "isValid": {
+                    "type": "boolean"
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "Bearer": {
+            "description": "Type \"Bearer\" followed by a space and JWT token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}
