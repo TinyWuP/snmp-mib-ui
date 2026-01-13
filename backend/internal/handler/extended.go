@@ -149,7 +149,7 @@ func (h *ExtendedHandler) SnmpGetBatch(c *gin.Context) {
 		return
 	}
 
-	client := NewSnmpClient(device)
+	client := snmp.NewClient(device)
 	results, err := client.Get(req.OIDs)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -157,20 +157,6 @@ func (h *ExtendedHandler) SnmpGetBatch(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, results)
-}
-
-// Helper to create SNMP client from handler package
-type snmpClientWrapper struct {
-	device *model.Device
-}
-
-func NewSnmpClient(device *model.Device) *snmpClientWrapper {
-	return &snmpClientWrapper{device: device}
-}
-
-func (c *snmpClientWrapper) Get(oids []string) ([]map[string]interface{}, error) {
-	// Import and use snmp package
-	return nil, nil // Will be handled by main snmp package
 }
 
 // Export history tracking

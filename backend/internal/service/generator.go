@@ -34,6 +34,19 @@ type GenerateConfigRequest struct {
 }
 
 func (s *GeneratorService) GenerateConfig(req *GenerateConfigRequest) string {
+	// 参数验证
+	if req.Collector == "" {
+		return "# 错误: 未指定采集器类型 (collector)"
+	}
+	if len(req.Nodes) == 0 {
+		return "# 错误: 未选择任何 OID 指标，请先从 MIB 树中选择需要采集的指标"
+	}
+
+	// Telegraf 和 Categraf 必须有设备信息
+	if (req.Collector == "telegraf" || req.Collector == "categraf") && len(req.Devices) == 0 {
+		return "# 错误: " + req.Collector + " 配置必须指定目标设备，请先添加并选择设备"
+	}
+
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
 
 	switch req.Collector {
@@ -44,7 +57,7 @@ func (s *GeneratorService) GenerateConfig(req *GenerateConfigRequest) string {
 	case "categraf":
 		return s.generateCategraf(req, timestamp)
 	default:
-		return fmt.Sprintf("# Unknown collector type: %s", req.Collector)
+		return fmt.Sprintf("# 错误: 不支持的采集器类型 '%s'，支持的类型：snmp-exporter, telegraf, categraf", req.Collector)
 	}
 }
 

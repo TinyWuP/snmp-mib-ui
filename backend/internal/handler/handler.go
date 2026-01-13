@@ -587,7 +587,12 @@ func parseMibContent(text, fileName string) []model.MibNode {
 	}
 
 	if len(rootNodes) == 0 {
-		return []model.MibNode{{Name: moduleName + " (No Nodes Found)", OID: "1.3.6.1", Children: []model.MibNode{}}}
+		// 提供更详细的错误信息
+		errorMsg := moduleName + " - 未找到有效的 MIB 节点"
+		if len(nodes) == 0 {
+			errorMsg += "（文件可能不是标准的 MIB 格式或缺少 OBJECT-TYPE 定义）"
+		}
+		return []model.MibNode{{Name: errorMsg, OID: "1.3.6.1", Children: []model.MibNode{}}}
 	}
 
 	return rootNodes

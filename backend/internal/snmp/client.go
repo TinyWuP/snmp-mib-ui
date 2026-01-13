@@ -231,18 +231,42 @@ func isPrintable(bytes []byte) bool {
 func (c *Client) TestConnection() error {
 	snmp := c.buildGoSNMP()
 	if err := snmp.Connect(); err != nil {
-		return fmt.Errorf("connect failed: %w", err)
+		if strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "i/o timeout") {
+			return fmt.Errorf("连接超时 - 设备 %s:%d 无法访问，请检查网络连接和防火墙设置", c.device.IP, c.device.Port)
+		}
+		if strings.Contains(err.Error(), "connection refused") {
+			return fmt.Errorf("连接被拒绝 - 设备 %s:%d 可能未启用 SNMP 服务或端口配置错误", c.device.IP, c.device.Port)
+		}
+		if strings.Contains(err.Error(), "no route to host") {
+			return fmt.Errorf("无法到达主机 - 设备 %s:%d 网络不可达，请检查路由配置", c.device.IP, c.device.Port)
+		}
+		return fmt.Errorf("连接失败: %w", err)
 	}
 	defer snmp.Conn.Close()
 
 	// Try to get sysDescr
 	oids := []string{".1.3.6.1.2.1.1.1.0"}
-	_, err := snmp.Get(oids)
+	result, err := snmp.Get(oids)
 	if err != nil {
 		if strings.Contains(err.Error(), "timeout") {
-			return fmt.Errorf("connection timeout - device may be unreachable or SNMP not enabled")
+			return fmt.Errorf("SNMP 请求超时 - 设备 %s:%d 响应超时，可能是设备负载过高或网络延迟", c.device.IP, c.device.Port)
 		}
-		return fmt.Errorf("SNMP get failed: %w", err)
+		if strings.Contains(err.Error(), "authentication failure") || strings.Contains(err.Error(), "auth") {
+			if c.device.Version == "v3" {
+				return fmt.Errorf("认证失败 - SNMP v3 认证信息不正确，请检查用户名、密码和加密协议配置")
+			}
+			return fmt.Errorf("认证失败 - Community 字符串 '%s' 不正确", c.device.Community)
+		}
+		if strings.Contains(err.Error(), "authorization") {
+			return fmt.Errorf("授权失败 - 设备 %s:%d 拒绝访问，请检查 SNMP 访问控制列表配置", c.device.IP, c.device.Port)
+		}
+		return fmt.Errorf("SNMP 查询失败: %w", err)
 	}
+
+	// 检查返回结果
+	if len(result.Variables) == 0 || result.Variables[0].Type == gosnmp.NoSuchObject || result.Variables[0].Type == gosnmp.NoSuchInstance {
+		return fmt.Errorf("设备响应异常 - 设备 %s:%d 不支持 sysDescr OID，可能是非标准 SNMP 设备", c.device.IP, c.device.Port)
+	}
+
 	return nil
 }
