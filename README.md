@@ -388,19 +388,6 @@ docker pull registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-bac
 docker pull registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest
 ```
 
-### Docker Hub（国际用户）
-
-| 镜像 | 地址 | 大小 | 说明 |
-|------|------|------|------|
-| 后端 | `evans743/snmp-mib-explorer-pro-backend:latest` | 26.2MB | Go 语言构建，轻量高效 |
-| 前端 | `evans743/snmp-mib-explorer-pro-frontend:latest` | 54MB | React + Nginx，静态资源服务 |
-
-**拉取命令：**
-```bash
-docker pull evans743/snmp-mib-explorer-pro-backend:latest
-docker pull evans743/snmp-mib-explorer-pro-frontend:latest
-```
-
 ---
 
 ## 📂 项目结构
