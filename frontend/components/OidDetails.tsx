@@ -184,20 +184,72 @@ const OidDetails: React.FC<OidDetailsProps> = ({ node, devices }) => {
 
         {activeTab === DetailTab.SIMULATOR && (
            <div className="animate-in slide-in-from-bottom-6 duration-500 max-w-2xl mx-auto py-10">
+             {/* 使用向导 */}
+             <div className="mb-8 bg-gradient-to-r from-blue-600/10 to-emerald-600/10 border border-blue-500/20 rounded-[40px] p-8">
+               <div className="flex items-start gap-4 mb-4">
+                 <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-600/40">
+                   <TerminalIcon className="w-5 h-5 text-white" />
+                 </div>
+                 <div>
+                   <h3 className="text-sm font-black text-white mb-2">SNMP 实时测试向导</h3>
+                   <p className="text-xs text-slate-400 leading-relaxed">在实际设备上测试 OID，验证数据采集是否正常</p>
+                 </div>
+               </div>
+               <div className="grid grid-cols-3 gap-4 mt-6">
+                 <div className="flex flex-col items-center text-center p-4 bg-black/40 rounded-3xl border border-slate-800/50">
+                   <div className="w-8 h-8 bg-blue-600/20 rounded-xl flex items-center justify-center mb-2">
+                     <span className="text-blue-500 font-black text-sm">1</span>
+                   </div>
+                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">选择设备</span>
+                 </div>
+                 <div className="flex flex-col items-center text-center p-4 bg-black/40 rounded-3xl border border-slate-800/50">
+                   <div className="w-8 h-8 bg-blue-600/20 rounded-xl flex items-center justify-center mb-2">
+                     <span className="text-blue-500 font-black text-sm">2</span>
+                   </div>
+                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">执行查询</span>
+                 </div>
+                 <div className="flex flex-col items-center text-center p-4 bg-black/40 rounded-3xl border border-slate-800/50">
+                   <div className="w-8 h-8 bg-blue-600/20 rounded-xl flex items-center justify-center mb-2">
+                     <span className="text-blue-500 font-black text-sm">3</span>
+                   </div>
+                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">查看结果</span>
+                 </div>
+               </div>
+               {devices.length === 0 && (
+                 <div className="mt-4 p-4 bg-amber-600/10 border border-amber-500/20 rounded-2xl">
+                   <p className="text-[10px] text-amber-400 font-medium flex items-center gap-2">
+                     <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
+                     提示：还没有设备？请先在"资产管理"页面添加 SNMP 设备
+                   </p>
+                 </div>
+               )}
+             </div>
+
              <div className="bg-slate-900/40 border border-slate-800 rounded-[56px] p-12 shadow-[0_0_100px_rgba(37,99,235,0.05)] flex flex-col gap-10 backdrop-blur-md">
                <div className="space-y-4">
-                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] ml-2">Select Target Device</label>
-                  <select value={testDeviceId} onChange={(e) => setTestDeviceId(e.target.value)} className="w-full bg-black/60 border border-slate-800 rounded-3xl px-8 py-6 text-sm text-white focus:border-blue-500 outline-none appearance-none cursor-pointer font-bold shadow-inner">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] ml-2">Select Target Device</label>
+                    <span className="text-[9px] text-slate-700 font-mono">{devices.length} devices available</span>
+                  </div>
+                  <select value={testDeviceId} onChange={(e) => setTestDeviceId(e.target.value)} className="w-full bg-black/60 border border-slate-800 rounded-3xl px-8 py-6 text-sm text-white focus:border-blue-500 outline-none appearance-none cursor-pointer font-bold shadow-inner transition-all hover:border-slate-700">
                     <option value="">-- Choose Device from Registry --</option>
-                    {devices.map(d => <option key={d.id} value={d.id}>{d.name} ({d.ip})</option>)}
+                    {devices.map(d => <option key={d.id} value={d.id}>{d.name} ({d.ip}:{d.port}) - {d.version}</option>)}
                   </select>
+                  {testDeviceId && (
+                    <div className="flex items-center gap-2 p-3 bg-blue-600/10 border border-blue-500/20 rounded-2xl">
+                      <ZapIcon className="w-4 h-4 text-blue-500" />
+                      <span className="text-[10px] text-blue-400 font-medium">
+                        将向 {devices.find(d => d.id === testDeviceId)?.ip} 发送 SNMP GET 请求
+                      </span>
+                    </div>
+                  )}
                </div>
-               <button onClick={handleRunTest} disabled={!testDeviceId || isProcessing} className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-20 text-white font-black py-6 rounded-3xl text-[10px] uppercase tracking-[0.4em] shadow-2xl shadow-blue-600/40 flex items-center justify-center gap-4 transition-all active:scale-95">
+               <button onClick={handleRunTest} disabled={!testDeviceId || isProcessing} className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-20 text-white font-black py-6 rounded-3xl text-[10px] uppercase tracking-[0.4em] shadow-2xl shadow-blue-600/40 flex items-center justify-center gap-4 transition-all active:scale-95 disabled:cursor-not-allowed">
                  {isProcessing ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <PlayIcon className="w-5 h-5" />}
-                 Execute SNMP GET
+                 {isProcessing ? 'Querying...' : 'Execute SNMP GET'}
                </button>
                <div className="bg-black/80 rounded-[40px] p-10 font-mono text-[11px] text-emerald-500 border border-slate-800 min-h-[200px] whitespace-pre-wrap leading-relaxed shadow-inner">
-                 {testResult || "// Select a device and click Execute to perform real SNMP query"}
+                 {testResult || "// Select a device and click Execute to perform real SNMP query\n// Results will appear here with response time and value"}
                </div>
              </div>
            </div>

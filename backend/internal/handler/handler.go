@@ -27,6 +27,16 @@ func NewHandler(db *model.DB, mibPath string) *Handler {
 }
 
 // Device handlers
+
+// GetDevices godoc
+// @Summary      获取所有设备
+// @Description  获取系统中所有已配置的 SNMP 设备列表
+// @Tags         devices
+// @Accept       json
+// @Produce      json
+// @Success      200  {array}   model.Device
+// @Failure      500  {object}  map[string]string
+// @Router       /devices [get]
 func (h *Handler) GetDevices(c *gin.Context) {
 	devices, err := h.db.GetDevices()
 	if err != nil {
@@ -39,6 +49,17 @@ func (h *Handler) GetDevices(c *gin.Context) {
 	c.JSON(http.StatusOK, devices)
 }
 
+// CreateDevice godoc
+// @Summary      创建新设备
+// @Description  添加一个新的 SNMP 设备到系统中
+// @Tags         devices
+// @Accept       json
+// @Produce      json
+// @Param        device  body      model.Device  true  "设备信息"
+// @Success      201     {object}  model.Device
+// @Failure      400     {object}  map[string]string
+// @Failure      500     {object}  map[string]string
+// @Router       /devices [post]
 func (h *Handler) CreateDevice(c *gin.Context) {
 	var device model.Device
 	if err := c.ShouldBindJSON(&device); err != nil {
@@ -61,6 +82,17 @@ func (h *Handler) CreateDevice(c *gin.Context) {
 	c.JSON(http.StatusCreated, device)
 }
 
+// CreateDevicesBatch godoc
+// @Summary      批量创建设备
+// @Description  一次性添加多个 SNMP 设备到系统中
+// @Tags         devices
+// @Accept       json
+// @Produce      json
+// @Param        devices  body      []model.Device  true  "设备列表"
+// @Success      201      {array}   model.Device
+// @Failure      400      {object}  map[string]string
+// @Failure      500      {object}  map[string]string
+// @Router       /devices/batch [post]
 func (h *Handler) CreateDevicesBatch(c *gin.Context) {
 	var devices []model.Device
 	if err := c.ShouldBindJSON(&devices); err != nil {
@@ -84,6 +116,16 @@ func (h *Handler) CreateDevicesBatch(c *gin.Context) {
 	c.JSON(http.StatusCreated, devices)
 }
 
+// DeleteDevice godoc
+// @Summary      删除设备
+// @Description  根据设备 ID 删除指定的 SNMP 设备
+// @Tags         devices
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "设备 ID"
+// @Success      200  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /devices/{id} [delete]
 func (h *Handler) DeleteDevice(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.db.DeleteDevice(id); err != nil {
@@ -94,6 +136,16 @@ func (h *Handler) DeleteDevice(c *gin.Context) {
 }
 
 // MIB Archive handlers
+
+// GetArchives godoc
+// @Summary      获取所有 MIB 归档
+// @Description  获取系统中所有已上传的 MIB 归档文件列表
+// @Tags         mib
+// @Accept       json
+// @Produce      json
+// @Success      200  {array}   model.MibArchive
+// @Failure      500  {object}  map[string]string
+// @Router       /mib/archives [get]
 func (h *Handler) GetArchives(c *gin.Context) {
 	archives, err := h.db.GetArchives()
 	if err != nil {
@@ -106,6 +158,17 @@ func (h *Handler) GetArchives(c *gin.Context) {
 	c.JSON(http.StatusOK, archives)
 }
 
+// UploadMib godoc
+// @Summary      上传 MIB 文件
+// @Description  上传一个包含 MIB 文件的 ZIP 压缩包
+// @Tags         mib
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        file  formData  file  true  "MIB ZIP 文件"
+// @Success      201   {object}  model.MibArchive
+// @Failure      400   {object}  map[string]string
+// @Failure      500   {object}  map[string]string
+// @Router       /mib/upload [post]
 func (h *Handler) UploadMib(c *gin.Context) {
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
@@ -665,6 +728,18 @@ type SnmpWalkRequest struct {
 	OID      string `json:"oid"`
 }
 
+// SnmpGet godoc
+// @Summary      SNMP GET 操作
+// @Description  对指定设备执行 SNMP GET 操作，获取一个或多个 OID 的值
+// @Tags         snmp
+// @Accept       json
+// @Produce      json
+// @Param        request  body      SnmpGetRequest  true  "SNMP GET 请求"
+// @Success      200      {array}   map[string]string
+// @Failure      400      {object}  map[string]string
+// @Failure      404      {object}  map[string]string
+// @Failure      500      {object}  map[string]string
+// @Router       /snmp/get [post]
 func (h *Handler) SnmpGet(c *gin.Context) {
 	var req SnmpGetRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -688,6 +763,18 @@ func (h *Handler) SnmpGet(c *gin.Context) {
 	c.JSON(http.StatusOK, results)
 }
 
+// SnmpWalk godoc
+// @Summary      SNMP WALK 操作
+// @Description  对指定设备执行 SNMP WALK 操作，遍历指定 OID 树下的所有节点
+// @Tags         snmp
+// @Accept       json
+// @Produce      json
+// @Param        request  body      SnmpWalkRequest  true  "SNMP WALK 请求"
+// @Success      200      {array}   map[string]string
+// @Failure      400      {object}  map[string]string
+// @Failure      404      {object}  map[string]string
+// @Failure      500      {object}  map[string]string
+// @Router       /snmp/walk [post]
 func (h *Handler) SnmpWalk(c *gin.Context) {
 	var req SnmpWalkRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -711,6 +798,16 @@ func (h *Handler) SnmpWalk(c *gin.Context) {
 	c.JSON(http.StatusOK, results)
 }
 
+// SnmpTest godoc
+// @Summary      测试 SNMP 连接
+// @Description  测试与指定 SNMP 设备的连接是否正常
+// @Tags         snmp
+// @Accept       json
+// @Produce      json
+// @Param        device  body      model.Device  true  "设备信息"
+// @Success      200     {object}  map[string]interface{}
+// @Failure      400     {object}  map[string]string
+// @Router       /snmp/test [post]
 func (h *Handler) SnmpTest(c *gin.Context) {
 	var device model.Device
 	if err := c.ShouldBindJSON(&device); err != nil {
@@ -741,6 +838,16 @@ func (h *Handler) getDeviceByID(id string) (*model.Device, error) {
 }
 
 // Config handlers
+
+// GetConfig godoc
+// @Summary      获取系统配置
+// @Description  获取当前系统的配置信息
+// @Tags         config
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  model.SystemConfig
+// @Failure      500  {object}  map[string]string
+// @Router       /config [get]
 func (h *Handler) GetConfig(c *gin.Context) {
 	config, err := h.db.GetConfig()
 	if err != nil {
@@ -750,6 +857,17 @@ func (h *Handler) GetConfig(c *gin.Context) {
 	c.JSON(http.StatusOK, config)
 }
 
+// UpdateConfig godoc
+// @Summary      更新系统配置
+// @Description  更新系统的配置信息
+// @Tags         config
+// @Accept       json
+// @Produce      json
+// @Param        config  body      model.SystemConfig  true  "配置信息"
+// @Success      200     {object}  model.SystemConfig
+// @Failure      400     {object}  map[string]string
+// @Failure      500     {object}  map[string]string
+// @Router       /config [put]
 func (h *Handler) UpdateConfig(c *gin.Context) {
 	var config model.SystemConfig
 	if err := c.ShouldBindJSON(&config); err != nil {

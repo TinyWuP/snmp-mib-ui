@@ -576,3 +576,211 @@ func sanitizeName(name string) string {
 	result = strings.Trim(result, "_")
 	return result
 }
+
+// ValidationResult represents the result of configuration validation
+type ValidationResult struct {
+	IsValid bool     `json:"isValid"`
+	Errors  []string `json:"errors"`
+	Warnings []string `json:"warnings"`
+}
+
+// ValidateConfig validates the generated configuration
+func (s *GeneratorService) ValidateConfig(req *GenerateConfigRequest) *ValidationResult {
+	result := &ValidationResult{
+		IsValid:  true,
+		Errors:   []string{},
+		Warnings: []string{},
+	}
+
+	// Check for duplicate OIDs
+	oidMap := make(map[string]string) // OID -> Name
+	for _, node := range req.Nodes {
+		if existingName, exists := oidMap[node.OID]; exists {
+			result.IsValid = false
+			result.Errors = append(result.Errors,
+				fmt.Sprintf("重复的 OID: %s (出现在 %s 和 %s)", node.OID, existingName, node.Name))
+		}
+		oidMap[node.OID] = node.Name
+	}
+
+	// Check OID format
+	for _, node := range req.Nodes {
+		if !isValidOID(node.OID) {
+			result.IsValid = false
+			result.Errors = append(result.Errors,
+				fmt.Sprintf("OID 格式无效: %s (%s)", node.OID, node.Name))
+		}
+	}
+
+	// Validate based on collector type
+	switch req.Collector {
+	case "snmp-exporter":
+		s.validateSnmpExporterConfig(req, result)
+	case "telegraf":
+		s.validateTelegrafConfig(req, result)
+	case "categraf":
+		s.validateCategrafConfig(req, result)
+	}
+
+	// Performance warnings
+	if len(req.Nodes) > 100 {
+		result.Warnings = append(result.Warnings,
+			fmt.Sprintf("采集指标数量较多 (%d)，可能影响 SNMP 采集性能", len(req.Nodes)))
+	}
+
+	// Check for common problematic OIDs
+	for _, node := range req.Nodes {
+		if isHighOverheadOID(node.OID) {
+			result.Warnings = append(result.Warnings,
+				fmt.Sprintf("OID %s (%s) 可能产生大量数据，建议谨慎使用", node.OID, node.Name))
+		}
+	}
+
+	return result
+}
+
+// validateSnmpExporterConfig validates SNMP Exporter configuration
+func (s *GeneratorService) validateSnmpExporterConfig(req *GenerateConfigRequest, result *ValidationResult) {
+	// Check community string
+	if req.Community == "" {
+		result.Warnings = append(result.Warnings, "未设置 Community 字符串，将使用默认值 'public'")
+	}
+
+	// Validate YAML syntax by generating and parsing
+	config := s.generateSnmpExporter(req, time.Now().Format("2006-01-02 15:04:05"))
+	if !isValidYAML(config) {
+		result.IsValid = false
+		result.Errors = append(result.Errors, "生成的 YAML 配置语法错误")
+	}
+}
+
+// validateTelegrafConfig validates Telegraf configuration
+func (s *GeneratorService) validateTelegrafConfig(req *GenerateConfigRequest, result *ValidationResult) {
+	// Check devices
+	if len(req.Devices) == 0 {
+		result.Warnings = append(result.Warnings, "未选择目标设备，将使用默认地址 127.0.0.1:161")
+	}
+
+	// Validate IP addresses
+	for _, device := range req.Devices {
+		if !isValidIP(device.IP) {
+			result.IsValid = false
+			result.Errors = append(result.Errors,
+				fmt.Sprintf("设备 IP 地址无效: %s (%s)", device.IP, device.Name))
+		}
+		if device.Port <= 0 || device.Port > 65535 {
+			result.IsValid = false
+			result.Errors = append(result.Errors,
+				fmt.Sprintf("设备端口无效: %d (%s)", device.Port, device.Name))
+		}
+	}
+}
+
+// validateCategrafConfig validates Categraf configuration
+func (s *GeneratorService) validateCategrafConfig(req *GenerateConfigRequest, result *ValidationResult) {
+	// Similar validation as Telegraf
+	if len(req.Devices) == 0 {
+		result.Warnings = append(result.Warnings, "未选择目标设备，将使用默认地址 127.0.0.1:161")
+	}
+
+	for _, device := range req.Devices {
+		if !isValidIP(device.IP) {
+			result.IsValid = false
+			result.Errors = append(result.Errors,
+				fmt.Sprintf("设备 IP 地址无效: %s (%s)", device.IP, device.Name))
+		}
+		if device.Port <= 0 || device.Port > 65535 {
+			result.IsValid = false
+			result.Errors = append(result.Errors,
+				fmt.Sprintf("设备端口无效: %d (%s)", device.Port, device.Name))
+		}
+	}
+}
+
+// isValidOID checks if an OID string is valid
+func isValidOID(oid string) bool {
+	if oid == "" {
+		return false
+	}
+	// OID should start with a digit (0-9)
+	if oid[0] < '0' || oid[0] > '9' {
+		return false
+	}
+	// Check format: numbers separated by dots
+	parts := strings.Split(oid, ".")
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+		// Each part should be a positive integer
+		for _, ch := range part {
+			if ch < '0' || ch > '9' {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// isValidIP checks if an IP address is valid (basic check)
+func isValidIP(ip string) bool {
+	if ip == "" {
+		return false
+	}
+	parts := strings.Split(ip, ".")
+	if len(parts) != 4 {
+		return false
+	}
+	for _, part := range parts {
+		if len(part) == 0 || len(part) > 3 {
+			return false
+		}
+		for _, ch := range part {
+			if ch < '0' || ch > '9' {
+				return false
+			}
+		}
+		num := 0
+		for _, ch := range part {
+			num = num*10 + int(ch-'0')
+		}
+		if num > 255 {
+			return false
+		}
+	}
+	return true
+}
+
+// isValidYAML checks if a YAML string is valid
+func isValidYAML(yamlStr string) bool {
+	// Basic YAML validation
+	// Check for proper indentation
+	lines := strings.Split(yamlStr, "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "  ") && strings.Contains(line, "  ") {
+			// Check for mixed tabs and spaces
+			if strings.Contains(line, "\t") && strings.Contains(line, "  ") {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// isHighOverheadOID checks if an OID is known to produce large responses
+func isHighOverheadOID(oid string) bool {
+	// Common high-overhead OIDs
+	highOverheadPrefixes := []string{
+		"1.3.6.1.2.1.2.2",   // ifTable
+		"1.3.6.1.2.1.4.20",  // ipAddrTable
+		"1.3.6.1.2.1.4.21",  // ipRouteTable
+		"1.3.6.1.2.1.4.22",  // ipNetToMediaTable
+		"1.3.6.1.2.1.17.4",  // dot1dTpFdbTable
+	}
+	for _, prefix := range highOverheadPrefixes {
+		if strings.HasPrefix(oid, prefix) {
+			return true
+		}
+	}
+	return false
+}

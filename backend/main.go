@@ -7,9 +7,32 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"snmp-mib-explorer/docs"
 	"snmp-mib-explorer/internal/handler"
 	"snmp-mib-explorer/internal/model"
 )
+
+// @title           SNMP MIB Explorer Pro API
+// @version         2.0.0
+// @description     SNMP MIB Explorer Pro 是一个专为网络运维工程师设计的可视化 SNMP 监控配置生成工具。
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    https://github.com/Oumu33/snmp-mib-ui/issues
+// @contact.email  oumu33@github.com
+
+// @license.name  MIT
+// @license.url   https://opensource.org/licenses/MIT
+
+// @host      localhost:8080
+// @BasePath  /api
+
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 
 func main() {
 	// 从环境变量读取配置
@@ -51,6 +74,10 @@ func main() {
 		AllowCredentials: false,
 	}))
 
+	// Swagger documentation
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/swagger/doc.json"), ginSwagger.DocExpansion("list")))
+	_ = docs.SwaggerInfo // Use docs package to avoid import not used warning
+
 	// API routes
 	api := r.Group("/api")
 	{
@@ -90,6 +117,7 @@ func main() {
 		// Config Generator
 		api.POST("/generate/config", h.GenerateConfig)
 		api.POST("/generate/code", h.GenerateCode)
+		api.POST("/validate/config", h.ValidateConfig)
 
 		// Export History
 		api.GET("/export/history", h.GetExportHistory)
@@ -149,6 +177,7 @@ func main() {
 
 	log.Printf("Server starting on %s:%s", host, port)
 	log.Printf("API endpoints available at /api/*")
+	log.Printf("Swagger documentation available at /swagger/index.html")
 	if err := r.Run(host + ":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

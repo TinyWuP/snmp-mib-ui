@@ -86,6 +86,27 @@ func (h *ExtendedHandler) GenerateConfig(c *gin.Context) {
 	})
 }
 
+// ValidateConfig godoc
+// @Summary      验证配置
+// @Description  在生成配置前验证配置参数，检查重复 OID、格式错误等
+// @Tags         generator
+// @Accept       json
+// @Produce      json
+// @Param        request  body      service.GenerateConfigRequest  true  "配置验证请求"
+// @Success      200      {object}  service.ValidationResult
+// @Failure      400      {object}  map[string]string
+// @Router       /validate/config [post]
+func (h *ExtendedHandler) ValidateConfig(c *gin.Context) {
+	var req service.GenerateConfigRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	result := h.generator.ValidateConfig(&req)
+	c.JSON(http.StatusOK, result)
+}
+
 func (h *ExtendedHandler) GenerateCode(c *gin.Context) {
 	var req service.GenerateCodeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
