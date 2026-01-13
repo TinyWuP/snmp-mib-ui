@@ -173,7 +173,7 @@ graph LR
 **✨ 优点：**
 - ✅ 无需本地构建，开箱即用
 - ✅ 阿里云镜像源，国内访问速度快
-- ✅ 镜像经过优化，体积小（后端 26.2MB，前端 54MB）
+- ✅ 镜像经过优化，体积小（后端 35.1MB，前端 62.2MB）
 
 ```bash
 # 🔥 一键启动
@@ -208,8 +208,8 @@ docker-compose pull && docker-compose up -d
 ```
 
 **📦 镜像信息：**
-- 🐳 **后端**: `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest` (26.2MB)
-- 🐳 **前端**: `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest` (54MB)
+- 🐳 **后端**: `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest` (35.1MB)
+- 🐳 **前端**: `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest` (62.2MB)
 
 ---
 
@@ -333,8 +333,8 @@ docker-compose up -d --build
 
 | 镜像 | 地址 | 大小 | 说明 |
 |------|------|------|------|
-| 🐳 **后端** | `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest` | 26.2MB | Go 语言构建，轻量高效 |
-| 🐳 **前端** | `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest` | 54MB | React + Nginx，静态资源服务 |
+| 🐳 **后端** | `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest` | 35.1MB | Go 语言构建，轻量高效 |
+| 🐳 **前端** | `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest` | 62.2MB | React + Nginx，静态资源服务 |
 
 ```bash
 # 🚀 拉取命令
