@@ -11,6 +11,10 @@ bin/
 *.so
 *.dylib
 
+# Backend binary
+backend/snmp-backend
+backend/snmp-mib-explorer
+
 # IDE
 .idea/
 .vscode/
