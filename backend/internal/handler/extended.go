@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"snmp-mib-explorer/internal/model"
 	"snmp-mib-explorer/internal/service"
+	"snmp-mib-explorer/internal/snmp"
 )
 
 // ExtendedHandler contains all service handlers
