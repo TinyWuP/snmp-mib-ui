@@ -32,8 +32,9 @@ FROM alpine:3.19
 # 阿里云 Alpine 镜像
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
-# 安装运行时依赖 (net-snmp 用于 MIB 解析)
-RUN apk add --no-cache ca-certificates tzdata net-snmp net-snmp-tools
+# 安装运行时依赖（只保留必需的）
+RUN apk add --no-cache ca-certificates tzdata && \
+    rm -rf /var/cache/apk/*
 
 # 设置时区
 ENV TZ=Asia/Shanghai

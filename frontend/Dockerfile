@@ -16,7 +16,8 @@ RUN npm config set registry https://registry.npmmirror.com
 
 # 先复制依赖文件，利用缓存
 COPY package*.json ./
-RUN npm ci
+RUN npm ci && \
+    npm cache clean --force
 
 # 复制源码并构建
 COPY . .
