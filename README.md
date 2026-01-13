@@ -207,31 +207,6 @@ docker-compose restart
 docker-compose pull && docker-compose up -d
 ```
 
-**🚀 使用 Makefile（推荐）：**
-
-```bash
-# 查看所有可用命令
-make help
-
-# 启动服务
-make up
-
-# 查看日志
-make logs
-
-# 停止服务
-make down
-
-# 构建镜像
-make build
-
-# 运行测试
-make test
-
-# 清理
-make clean
-```
-
 **📦 镜像信息：**
 - 🐳 **后端**: `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-backend:latest` (35.1MB)
 - 🐳 **前端**: `registry.cn-hangzhou.aliyuncs.com/snmp-mib/snmp-mib-explorer-pro-frontend:latest` (62.2MB)
