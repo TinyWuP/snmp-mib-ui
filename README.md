@@ -3,7 +3,7 @@
 > **告别手写 SNMP 配置的痛苦！** 一站式可视化 SNMP 监控配置生成平台
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://golang.org)
+[![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go)](https://golang.org)
 [![React](https://img.shields.io/badge/React-18+-61DAFB?logo=react)](https://reactjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5+-3178C6?logo=typescript)](https://www.typescriptlang.org)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://www.docker.com)
@@ -43,10 +43,10 @@ SNMP MIB Explorer Pro 是一个专为网络运维工程师设计的可视化 SNM
 | 🖥️ **设备资产管理** | 统一管理监控目标设备，支持批量导入导出 |
 | 🔍 **OID 信息展示** | 显示 OID 名称、类型、访问权限、描述等详细信息 |
 | 📋 **配置预览复制** | 实时预览生成的配置文件，一键复制到剪贴板 |
-| 🔬 **实时 SNMP 测试** | 在 OID 详情页直接测试 SNMP GET，查看实时返回值和响应时间 |
+| 🔬 **实时 SNMP 测试** | 在 OID 详情页直接测试 SNMP GET，查看实时返回值和响应时间；内置使用向导，三步完成设备测试 |
 | 🎨 **OID 智能推荐** | 按分类（CPU、内存、网络等）快速筛选常用 OID 指标 |
 | 🔎 **全局智能搜索** | 跨所有 MIB 文件搜索 OID 名称、描述、语法，快速定位指标 |
-| ✅ **配置验证优化** | 自动检查 YAML 语法、重复 OID、采集开销，提供优化建议 |
+| ✅ **配置验证优化** | 自动检查 YAML 语法、重复 OID、采集开销，提供优化建议；支持实时验证配置参数 |
 
 ---
 
