@@ -122,6 +122,12 @@ func main() {
 		// Export History
 		api.GET("/export/history", h.GetExportHistory)
 		api.POST("/export/history", h.SaveExportHistory)
+
+		// SSH Operations
+		api.POST("/ssh/test", h.TestSSHConnection)
+		api.POST("/ssh/detect-brand", h.DetectDeviceBrand)
+		api.POST("/ssh/check-snmp", h.CheckSNMPStatus)
+		api.POST("/ssh/enable-snmp", h.EnableSNMP)
 	}
 
 	// Health check

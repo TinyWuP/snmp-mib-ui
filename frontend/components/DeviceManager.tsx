@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
-import { Device } from '../types';
-import { snmpApi } from '../services/api';
+import { Device, SNMPConfig } from '../types';
+import { snmpApi, sshApi } from '../services/api';
 import { PlusIcon, TrashIcon, ServerIcon, DownloadIcon, UploadIcon, ChevronRight } from './Icons';
 
 // 简单的 Wifi/信号图标
@@ -27,6 +27,24 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
     name: '', ip: '', port: 161, version: 'v2c', community: 'public',
     securityLevel: 'authPriv', authProtocol: 'SHA', privProtocol: 'AES'
   });
+
+  // SSH related states
+  const [showSSHModal, setShowSSHModal] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
+  const [sshCreds, setSshCreds] = useState({ username: '', password: '', port: 22 });
+  const [snmpStatus, setSnmpStatus] = useState<any>(null);
+  const [checkingSNMP, setCheckingSNMP] = useState(false);
+  const [showSNMPConfig, setShowSNMPConfig] = useState(false);
+  const [snmpConfig, setSnmpConfig] = useState<Partial<SNMPConfig>>({
+    version: 'v2c',
+    community: 'public',
+    location: '',
+    contact: '',
+    sysName: ''
+  });
+  const [enablingSNMP, setEnablingSNMP] = useState(false);
+  const [deviceBrand, setDeviceBrand] = useState<string>('generic');
+  const [detectingBrand, setDetectingBrand] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,6 +136,102 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
     }
   };
 
+  const handleOpenSSH = (device: Device) => {
+    setSelectedDevice(device);
+    setSshCreds({
+      username: device.sshUsername || '',
+      password: device.sshPassword || '',
+      port: device.sshPort || 22
+    });
+    setSnmpStatus(null);
+    setShowSSHModal(true);
+  };
+
+  const handleTestSSH = async () => {
+    if (!selectedDevice) return;
+    try {
+      const result = await sshApi.testConnection({
+        host: selectedDevice.ip,
+        port: sshCreds.port,
+        username: sshCreds.username,
+        password: sshCreds.password
+      });
+      if (result.success) {
+        alert('SSH连接成功！');
+      } else {
+        alert('SSH连接失败：' + result.error);
+      }
+    } catch (error) {
+      alert('SSH连接失败：' + (error as Error).message);
+    }
+  };
+
+  const handleDetectBrand = async () => {
+    if (!selectedDevice) return;
+    setDetectingBrand(true);
+    try {
+      const result = await sshApi.detectBrand({
+        host: selectedDevice.ip,
+        port: sshCreds.port,
+        username: sshCreds.username,
+        password: sshCreds.password
+      });
+      if (result.success) {
+        setDeviceBrand(result.brand);
+        alert('设备品牌检测成功：' + result.brand);
+      } else {
+        alert('设备品牌检测失败');
+      }
+    } catch (error) {
+      alert('设备品牌检测失败：' + (error as Error).message);
+    } finally {
+      setDetectingBrand(false);
+    }
+  };
+
+  const handleCheckSNMPStatus = async () => {
+    if (!selectedDevice) return;
+    setCheckingSNMP(true);
+    try {
+      const status = await sshApi.checkSNMPStatus({
+        host: selectedDevice.ip,
+        port: sshCreds.port,
+        username: sshCreds.username,
+        password: sshCreds.password
+      });
+      setSnmpStatus(status);
+    } catch (error) {
+      alert('检查SNMP状态失败：' + (error as Error).message);
+    } finally {
+      setCheckingSNMP(false);
+    }
+  };
+
+  const handleEnableSNMP = async () => {
+    if (!selectedDevice) return;
+    setEnablingSNMP(true);
+    try {
+      await sshApi.enableSNMP({
+        host: selectedDevice.ip,
+        port: sshCreds.port,
+        username: sshCreds.username,
+        password: sshCreds.password,
+        config: {
+          ...snmpConfig,
+          sysName: snmpConfig.sysName || selectedDevice.ip
+        },
+        brand: deviceBrand
+      });
+      alert('SNMP服务已成功启用并配置！');
+      setShowSNMPConfig(false);
+      handleCheckSNMPStatus();
+    } catch (error) {
+      alert('启用SNMP失败：' + (error as Error).message);
+    } finally {
+      setEnablingSNMP(false);
+    }
+  };
+
   return (
     <div className="p-12 max-w-7xl mx-auto">
       <div className="flex justify-between items-end mb-12 border-b border-slate-900 pb-10">
@@ -158,6 +272,15 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
                 <ServerIcon className="w-8 h-8" />
               </div>
               <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                <button
+                  onClick={() => handleOpenSSH(device)}
+                  className="text-slate-700 hover:text-green-400 p-3 hover:bg-green-400/10 rounded-2xl"
+                  title="SSH连接"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M2 12h20M2 12l5-5M2 12l5 5M22 12l-5-5M22 12l-5 5" />
+                  </svg>
+                </button>
                 <button
                   onClick={() => handleTestConnection(device)}
                   disabled={testingId === device.id}
@@ -230,23 +353,23 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
                 </div>
                 <div className="w-16 h-1 bg-blue-600 rounded-full"></div>
               </div>
-              
+
               <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                    <div className="space-y-3">
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Entity Identifier</label>
-                    <input 
+                    <input
                       required
                       value={newDevice.name}
                       onChange={e => setNewDevice({...newDevice, name: e.target.value})}
-                      type="text" 
-                      placeholder="e.g. CORE-SW-01" 
-                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none transition-all placeholder:text-slate-800 font-bold shadow-inner" 
+                      type="text"
+                      placeholder="e.g. CORE-SW-01"
+                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none transition-all placeholder:text-slate-800 font-bold shadow-inner"
                     />
                   </div>
                   <div className="space-y-3">
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Protocol Version</label>
-                    <select 
+                    <select
                       value={newDevice.version}
                       onChange={e => setNewDevice({...newDevice, version: e.target.value as any})}
                       className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none appearance-none cursor-pointer font-bold shadow-inner"
@@ -257,27 +380,27 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
                     </select>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <div className="md:col-span-2 space-y-3">
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Target IP / FQDN</label>
-                    <input 
+                    <input
                       required
                       value={newDevice.ip}
                       onChange={e => setNewDevice({...newDevice, ip: e.target.value})}
-                      type="text" 
-                      placeholder="192.168.1.1" 
-                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none transition-all font-mono font-bold shadow-inner" 
+                      type="text"
+                      placeholder="192.168.1.1"
+                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none transition-all font-mono font-bold shadow-inner"
                     />
                   </div>
                   <div className="space-y-3">
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">UDP Port</label>
-                    <input 
+                    <input
                       required
                       value={newDevice.port}
                       onChange={e => setNewDevice({...newDevice, port: parseInt(e.target.value) || 161})}
-                      type="number" 
-                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none transition-all font-mono font-bold shadow-inner" 
+                      type="number"
+                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none transition-all font-mono font-bold shadow-inner"
                     />
                   </div>
                 </div>
@@ -285,12 +408,12 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
                 {newDevice.version !== 'v3' ? (
                   <div className="space-y-3 animate-in fade-in slide-in-from-top-4">
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Read Community String</label>
-                    <input 
+                    <input
                       value={newDevice.community}
                       onChange={e => setNewDevice({...newDevice, community: e.target.value})}
-                      type="text" 
-                      placeholder="public" 
-                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none transition-all font-bold shadow-inner" 
+                      type="text"
+                      placeholder="public"
+                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none transition-all font-bold shadow-inner"
                     />
                   </div>
                 ) : (
@@ -298,18 +421,18 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-3">
                         <label className="block text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Security Name (Username)</label>
-                        <input 
+                        <input
                           required
                           value={newDevice.securityName}
                           onChange={e => setNewDevice({...newDevice, securityName: e.target.value})}
-                          type="text" 
-                          placeholder="snmp_user" 
-                          className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none transition-all font-bold" 
+                          type="text"
+                          placeholder="snmp_user"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none transition-all font-bold"
                         />
                       </div>
                       <div className="space-y-3">
                         <label className="block text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Security Level</label>
-                        <select 
+                        <select
                           value={newDevice.securityLevel}
                           onChange={e => setNewDevice({...newDevice, securityLevel: e.target.value as any})}
                           className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none font-bold"
@@ -325,7 +448,7 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2">
                         <div className="space-y-3">
                           <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Auth Protocol</label>
-                          <select 
+                          <select
                             value={newDevice.authProtocol}
                             onChange={e => setNewDevice({...newDevice, authProtocol: e.target.value as any})}
                             className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none font-bold"
@@ -338,12 +461,12 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
                         </div>
                         <div className="space-y-3">
                           <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Auth Password</label>
-                          <input 
+                          <input
                             required
                             value={newDevice.authPassword}
                             onChange={e => setNewDevice({...newDevice, authPassword: e.target.value})}
-                            type="password" 
-                            className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none font-bold" 
+                            type="password"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none font-bold"
                           />
                         </div>
                       </div>
@@ -353,7 +476,7 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2">
                         <div className="space-y-3">
                           <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Priv Protocol (Encryption)</label>
-                          <select 
+                          <select
                             value={newDevice.privProtocol}
                             onChange={e => setNewDevice({...newDevice, privProtocol: e.target.value as any})}
                             className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none font-bold"
@@ -366,12 +489,12 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
                         </div>
                         <div className="space-y-3">
                           <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Priv Password</label>
-                          <input 
+                          <input
                             required
                             value={newDevice.privPassword}
                             onChange={e => setNewDevice({...newDevice, privPassword: e.target.value})}
-                            type="password" 
-                            className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none font-bold" 
+                            type="password"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-5 text-sm text-white focus:border-blue-500 outline-none font-bold"
                           />
                         </div>
                       </div>
@@ -379,12 +502,269 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
                   </div>
                 )}
               </div>
-              
+
               <div className="flex gap-6 mt-16">
                 <button type="button" onClick={() => setShowAdd(false)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-black py-5 rounded-3xl transition-all uppercase tracking-[0.2em] text-xs">Dismiss</button>
                 <button type="submit" className="flex-2 bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-3xl transition-all shadow-2xl shadow-blue-600/40 uppercase tracking-[0.2em] text-xs px-12">Commit Asset</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* SSH Modal */}
+      {showSSHModal && selectedDevice && (
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-[100] flex items-center justify-center p-8 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-[50px] w-full max-w-4xl my-auto overflow-hidden animate-in zoom-in-95 duration-500 shadow-[0_0_100px_rgba(37,99,235,0.1)]">
+            <div className="p-12">
+              <div className="flex justify-between items-center mb-12">
+                <div>
+                  <h3 className="text-3xl font-black text-white tracking-tighter">SSH Connection</h3>
+                  <p className="text-slate-500 text-sm mt-1 font-medium">连接到设备 {selectedDevice.name} ({selectedDevice.ip})</p>
+                </div>
+                <button
+                  onClick={() => setShowSSHModal(false)}
+                  className="text-slate-500 hover:text-white"
+                >
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* SSH Credentials */}
+              <div className="space-y-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">SSH Username</label>
+                    <input
+                      value={sshCreds.username}
+                      onChange={e => setSshCreds({...sshCreds, username: e.target.value})}
+                      type="text"
+                      placeholder="root"
+                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-4 text-sm text-white focus:border-blue-500 outline-none transition-all font-bold shadow-inner"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">SSH Password</label>
+                    <input
+                      value={sshCreds.password}
+                      onChange={e => setSshCreds({...sshCreds, password: e.target.value})}
+                      type="password"
+                      placeholder="••••••••"
+                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-4 text-sm text-white focus:border-blue-500 outline-none transition-all font-bold shadow-inner"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">SSH Port</label>
+                    <input
+                      value={sshCreds.port}
+                      onChange={e => setSshCreds({...sshCreds, port: parseInt(e.target.value) || 22})}
+                      type="number"
+                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-4 text-sm text-white focus:border-blue-500 outline-none transition-all font-bold shadow-inner"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">设备品牌</label>
+                  <div className="flex gap-4">
+                    <select
+                      value={deviceBrand}
+                      onChange={e => setDeviceBrand(e.target.value)}
+                      className="flex-1 bg-black/60 border border-slate-800 rounded-2xl px-6 py-4 text-sm text-white focus:border-blue-500 outline-none font-bold shadow-inner"
+                    >
+                      <option value="generic">通用 Linux</option>
+                      <option value="huawei">华为 (Huawei)</option>
+                      <option value="cisco">思科 (Cisco)</option>
+                      <option value="h3c">H3C</option>
+                      <option value="juniper">Juniper</option>
+                      <option value="arista">Arista</option>
+                      <option value="fortinet">Fortinet</option>
+                      <option value="mikrotik">MikroTik</option>
+                      <option value="dell">戴尔 (Dell)</option>
+                      <option value="hp">惠普 (HP)</option>
+                    </select>
+                    <button
+                      onClick={handleDetectBrand}
+                      disabled={detectingBrand}
+                      className="px-6 bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all uppercase tracking-[0.2em] text-xs disabled:opacity-50"
+                    >
+                      {detectingBrand ? '检测中...' : '自动检测'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    onClick={handleTestSSH}
+                    className="flex-1 bg-green-600 hover:bg-green-500 text-white font-black py-4 rounded-2xl transition-all uppercase tracking-[0.2em] text-xs"
+                  >
+                    测试SSH连接
+                  </button>
+                  <button
+                    onClick={handleCheckSNMPStatus}
+                    disabled={checkingSNMP}
+                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all uppercase tracking-[0.2em] text-xs disabled:opacity-50"
+                  >
+                    {checkingSNMP ? '检查中...' : '检查SNMP状态'}
+                  </button>
+                </div>
+              </div>
+
+              {/* SNMP Status Display */}
+              {snmpStatus && (
+                <div className={`p-6 rounded-2xl mb-8 ${
+                  snmpStatus.running
+                    ? 'bg-emerald-500/10 border border-emerald-500/20'
+                    : 'bg-red-500/10 border border-red-500/20'
+                }`}>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className={`w-3 h-3 rounded-full ${snmpStatus.running ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                    <span className={`font-black text-sm uppercase tracking-widest ${snmpStatus.running ? 'text-emerald-500' : 'text-red-500'}`}>
+                      {snmpStatus.message}
+                    </span>
+                  </div>
+                  {snmpStatus.community && (
+                    <div className="text-xs text-slate-400 font-mono mb-2">
+                      Community: {snmpStatus.community}
+                    </div>
+                  )}
+                  {snmpStatus.version && (
+                    <div className="text-xs text-slate-400 font-mono mb-2">
+                      Version: {snmpStatus.version}
+                    </div>
+                  )}
+                  {!snmpStatus.running && (
+                    <button
+                      onClick={() => setShowSNMPConfig(true)}
+                      className="mt-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black px-6 py-3 rounded-xl transition-all uppercase tracking-widest text-xs"
+                    >
+                      一键启用SNMP
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SNMP Configuration Modal */}
+      {showSNMPConfig && selectedDevice && (
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-[110] flex items-center justify-center p-8 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-[50px] w-full max-w-3xl my-auto overflow-hidden animate-in zoom-in-95 duration-500 shadow-[0_0_100px_rgba(37,99,235,0.1)]">
+            <div className="p-12">
+              <div className="flex justify-between items-center mb-12">
+                <div>
+                  <h3 className="text-3xl font-black text-white tracking-tighter">启用SNMP服务</h3>
+                  <p className="text-slate-500 text-sm mt-1 font-medium">配置设备 {selectedDevice.name} 的SNMP服务</p>
+                </div>
+                <button
+                  onClick={() => setShowSNMPConfig(false)}
+                  className="text-slate-500 hover:text-white"
+                >
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">SNMP Version</label>
+                    <select
+                      value={snmpConfig.version}
+                      onChange={e => setSnmpConfig({...snmpConfig, version: e.target.value as any})}
+                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-4 text-sm text-white focus:border-blue-500 outline-none font-bold shadow-inner"
+                    >
+                      <option value="v2c">SNMP v2c</option>
+                      <option value="v3">SNMP v3</option>
+                    </select>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Community String</label>
+                    <input
+                      value={snmpConfig.community}
+                      onChange={e => setSnmpConfig({...snmpConfig, community: e.target.value})}
+                      type="text"
+                      placeholder="public"
+                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-4 text-sm text-white focus:border-blue-500 outline-none font-bold shadow-inner"
+                    />
+                  </div>
+                </div>
+
+                {snmpConfig.version === 'v3' && (
+                  <div className="space-y-8 p-8 bg-black/40 rounded-[32px] border border-slate-800">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-3">
+                        <label className="block text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Security Name</label>
+                        <input
+                          value={snmpConfig.securityName || ''}
+                          onChange={e => setSnmpConfig({...snmpConfig, securityName: e.target.value})}
+                          type="text"
+                          placeholder="snmp_user"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-4 text-sm text-white focus:border-blue-500 outline-none font-bold"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="block text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Auth Protocol</label>
+                        <select
+                          value={snmpConfig.authProtocol || 'SHA'}
+                          onChange={e => setSnmpConfig({...snmpConfig, authProtocol: e.target.value as any})}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-4 text-sm text-white focus:border-blue-500 outline-none font-bold"
+                        >
+                          <option value="MD5">MD5</option>
+                          <option value="SHA">SHA</option>
+                          <option value="SHA256">SHA-256</option>
+                          <option value="SHA512">SHA-512</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">System Name</label>
+                    <input
+                      value={snmpConfig.sysName || ''}
+                      onChange={e => setSnmpConfig({...snmpConfig, sysName: e.target.value})}
+                      type="text"
+                      placeholder={selectedDevice.ip}
+                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-4 text-sm text-white focus:border-blue-500 outline-none font-bold shadow-inner"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Location</label>
+                    <input
+                      value={snmpConfig.location || ''}
+                      onChange={e => setSnmpConfig({...snmpConfig, location: e.target.value})}
+                      type="text"
+                      placeholder="Unknown"
+                      className="w-full bg-black/60 border border-slate-800 rounded-2xl px-6 py-4 text-sm text-white focus:border-blue-500 outline-none font-bold shadow-inner"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-6">
+                  <button
+                    onClick={() => setShowSNMPConfig(false)}
+                    className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-black py-4 rounded-2xl transition-all uppercase tracking-[0.2em] text-xs"
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={handleEnableSNMP}
+                    disabled={enablingSNMP}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl transition-all shadow-2xl shadow-emerald-600/40 uppercase tracking-[0.2em] text-xs disabled:opacity-50"
+                  >
+                    {enablingSNMP ? '配置中...' : '启用SNMP'}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

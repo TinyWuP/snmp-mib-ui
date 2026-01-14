@@ -49,6 +49,10 @@ export interface Device {
   authPassword?: string;
   privProtocol?: 'DES' | 'AES' | 'AES192' | 'AES256';
   privPassword?: string;
+  // SSH credentials
+  sshUsername?: string;
+  sshPassword?: string;
+  sshPort?: number;
 }
 
 export type ViewState = 'dashboard' | 'mibs' | 'devices' | 'generator' | 'settings';
@@ -58,4 +62,36 @@ export enum DetailTab {
   OVERVIEW = 'overview',
   CODE_GEN = 'code_gen',
   SIMULATOR = 'simulator'
+}
+
+// SSH related types
+export type DeviceBrand = 'generic' | 'huawei' | 'cisco' | 'h3c' | 'juniper' | 'arista' | 'fortinet' | 'mikrotik' | 'dell' | 'hp';
+
+export interface SSHTestRequest {
+  host: string;
+  port?: number;
+  username: string;
+  password: string;
+}
+
+export interface SNMPStatus {
+  running: boolean;
+  message: string;
+  config: string;
+  community?: string;
+  version?: string;
+  securityName?: string;
+}
+
+export interface SNMPConfig {
+  version: 'v2c' | 'v3';
+  community: string;
+  securityName?: string;
+  authProtocol?: 'MD5' | 'SHA' | 'SHA256' | 'SHA512';
+  authPassword?: string;
+  privProtocol?: 'DES' | 'AES' | 'AES192' | 'AES256';
+  privPassword?: string;
+  location?: string;
+  contact?: string;
+  sysName?: string;
 }

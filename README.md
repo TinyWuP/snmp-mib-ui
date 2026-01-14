@@ -91,6 +91,8 @@ graph LR
 | 🎨 **OID 智能推荐** | ✅ | 按分类（CPU、内存、网络等）快速筛选常用 OID 指标 |
 | 🔎 **全局智能搜索** | ✅ | 跨所有 MIB 文件搜索 OID 名称、描述、语法，快速定位指标 |
 | ✅ **配置验证优化** | ✅ | 自动检查 YAML 语法、重复 OID、采集开销，提供优化建议；支持实时验证配置参数 |
+| 🔌 **SSH 远程配置** | ✅ | 支持 SSH 远程连接设备，检查 SNMP 状态，一键启用 SNMP 服务 |
+| 🏷️ **多品牌支持** | ✅ | 支持华为、思科、H3C、Juniper、Arista、Fortinet、MikroTik、戴尔、惠普等多种品牌设备 |
 
 </div>
 
@@ -322,6 +324,88 @@ docker-compose up -d --build
 7. 点击"生成配置"
 8. 预览并复制配置文件
 ```
+
+---
+
+### 5️⃣ SSH 远程配置 SNMP
+
+<div align="center">
+
+> 🔌 支持通过 SSH 远程连接设备，检查 SNMP 服务状态，一键启用 SNMP 服务
+
+</div>
+
+**🏷️ 支持的品牌：**
+- 🇨🇳 华为 (Huawei) - VRP 系统
+- 🇺🇸 思科 (Cisco) - IOS/IOS-XR 系统
+- 🇨🇳 H3C - Comware 系统
+- 🇺🇸 Juniper - JunOS 系统
+- 🇺🇸 Arista - EOS 系统
+- 🇨🇦 Fortinet - FortiOS 系统
+- 🇱🇻 MikroTik - RouterOS 系统
+- 🇺🇸 戴尔 (Dell) - PowerConnect 系统
+- 🇺🇸 惠普 (HP) - ProCurve 系统
+- 💻 通用 Linux - net-snmp
+
+**🔧 使用步骤：**
+
+```bash
+📝 步骤：
+1. 点击"设备管理"标签页
+2. 在设备卡片上点击绿色 SSH 按钮
+3. 输入 SSH 凭据：
+   - SSH 用户名
+   - SSH 密码
+   - SSH 端口（默认 22）
+4. 点击"测试SSH连接"验证连接
+5. 点击"自动检测"按钮自动识别设备品牌
+6. 点击"检查SNMP状态"查看设备 SNMP 服务状态
+7. 如果 SNMP 未运行，点击"一键启用SNMP"
+8. 配置 SNMP 参数：
+   - SNMP 版本（v2c/v3）
+   - Community 字符串
+   - v3 认证信息（如选择 v3）
+   - 系统信息（名称、位置、联系人）
+9. 点击"启用SNMP"完成配置
+```
+
+**⚙️ SNMP 配置说明：**
+
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| 版本 | SNMP 协议版本 | v2c |
+| Community | v2c 团体名字符串 | public |
+| 安全名称 | v3 用户名 | - |
+| 认证协议 | v3 认证算法（MD5/SHA/SHA256/SHA512） | SHA |
+| 认证密码 | v3 认证密码 | - |
+| 加密协议 | v3 加密算法（DES/AES/AES192/AES256） | AES |
+| 加密密码 | v3 加密密码 | - |
+| 系统名称 | 设备系统名称 | 设备 IP |
+| 位置 | 设备物理位置 | Unknown |
+| 联系人 | 管理员联系方式 | admin@example.com |
+
+**🔍 品牌检测：**
+
+系统会自动检测设备品牌，使用对应厂商的命令进行 SNMP 配置：
+
+- **华为**: `display version` → `snmp-agent community`
+- **思科**: `show version` → `snmp-server community`
+- **H3C**: `display version` → `snmp-agent community`
+- **Juniper**: `show version` → `set system snmp`
+- **Arista**: `show version` → `snmp-server community`
+- **Fortinet**: `get system status` → `set system snmp`
+- **MikroTik**: `/system resource print` → `/snmp set`
+- **戴尔**: `show version` → `snmp-server community`
+- **惠普**: `show version` → `snmp-server community`
+- **通用 Linux**: `uname -a` → `/etc/snmp/snmpd.conf`
+
+**⚠️ 注意事项：**
+
+- 确保 SSH 服务已启用并可访问
+- 确保使用的账户有足够的权限执行 SNMP 配置命令
+- 部分设备可能需要进入特权模式（enable）或配置模式（configure terminal）
+- 配置完成后建议保存配置（save/write memory）
+- 建议在测试环境先验证配置命令
 
 ---
 

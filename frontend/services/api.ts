@@ -187,3 +187,29 @@ export const exportApi = {
 export const versionsApi = {
   getVersions: (collector: CollectorType) => request<{ versions: string[]; isFallback: boolean }>(`/versions/${collector}`),
 };
+
+// SSH API
+export interface SSHTestResponse {
+  success: boolean;
+  error?: string;
+  message?: string;
+}
+
+export const sshApi = {
+  testConnection: (req: { host: string; port?: number; username: string; password: string }) => request<SSHTestResponse>('/ssh/test', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  }),
+  detectBrand: (req: { host: string; port?: number; username: string; password: string }) => request<{ success: boolean; brand: string; message: string }>('/ssh/detect-brand', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  }),
+  checkSNMPStatus: (req: { host: string; port?: number; username: string; password: string }) => request<any>('/ssh/check-snmp', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  }),
+  enableSNMP: (req: { host: string; port?: number; username: string; password: string; config: any; brand?: string }) => request<any>('/ssh/enable-snmp', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  }),
+};

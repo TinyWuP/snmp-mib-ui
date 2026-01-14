@@ -2,6 +2,7 @@ package model
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,7 +22,11 @@ type Device struct {
 	AuthPassword  string `json:"authPassword,omitempty"`
 	PrivProtocol  string `json:"privProtocol,omitempty"`
 	PrivPassword  string `json:"privPassword,omitempty"`
-	CreatedAt     int64  `json:"createdAt"`
+	// SSH credentials
+	SSHUsername string `json:"sshUsername,omitempty"`
+	SSHPassword string `json:"sshPassword,omitempty"`
+	SSHPort     int    `json:"sshPort,omitempty"`
+	CreatedAt   int64  `json:"createdAt"`
 }
 
 type MibArchive struct {
@@ -94,6 +99,9 @@ func (db *DB) init() error {
 		auth_password TEXT,
 		priv_protocol TEXT,
 		priv_password TEXT,
+		ssh_username TEXT,
+		ssh_password TEXT,
+		ssh_port INTEGER DEFAULT 22,
 		created_at INTEGER
 	);
 
@@ -116,7 +124,25 @@ func (db *DB) init() error {
 	INSERT OR IGNORE INTO system_config (key, value) VALUES ('defaultCommunity', 'public');
 	`
 	_, err := db.conn.Exec(schema)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Add SSH columns if they don't exist (for backward compatibility)
+	_, err = db.conn.Exec(`ALTER TABLE devices ADD COLUMN ssh_username TEXT`)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column") {
+		return err
+	}
+	_, err = db.conn.Exec(`ALTER TABLE devices ADD COLUMN ssh_password TEXT`)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column") {
+		return err
+	}
+	_, err = db.conn.Exec(`ALTER TABLE devices ADD COLUMN ssh_port INTEGER DEFAULT 22`)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column") {
+		return err
+	}
+
+	return nil
 }
 
 func (db *DB) Close() error {
@@ -126,7 +152,8 @@ func (db *DB) Close() error {
 // Device CRUD
 func (db *DB) GetDevices() ([]Device, error) {
 	rows, err := db.conn.Query(`SELECT id, name, ip, port, version, community,
-		security_name, security_level, auth_protocol, auth_password, priv_protocol, priv_password, created_at
+		security_name, security_level, auth_protocol, auth_password, priv_protocol, priv_password,
+		ssh_username, ssh_password, ssh_port, created_at
 		FROM devices ORDER BY created_at DESC`)
 	if err != nil {
 		return nil, err
@@ -137,8 +164,11 @@ func (db *DB) GetDevices() ([]Device, error) {
 	for rows.Next() {
 		var d Device
 		var secName, secLevel, authProto, authPass, privProto, privPass sql.NullString
+		var sshUser, sshPass sql.NullString
+		var sshPort sql.NullInt64
 		err := rows.Scan(&d.ID, &d.Name, &d.IP, &d.Port, &d.Version, &d.Community,
-			&secName, &secLevel, &authProto, &authPass, &privProto, &privPass, &d.CreatedAt)
+			&secName, &secLevel, &authProto, &authPass, &privProto, &privPass,
+			&sshUser, &sshPass, &sshPort, &d.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -148,6 +178,11 @@ func (db *DB) GetDevices() ([]Device, error) {
 		d.AuthPassword = authPass.String
 		d.PrivProtocol = privProto.String
 		d.PrivPassword = privPass.String
+		d.SSHUsername = sshUser.String
+		d.SSHPassword = sshPass.String
+		if sshPort.Valid {
+			d.SSHPort = int(sshPort.Int64)
+		}
 		devices = append(devices, d)
 	}
 	return devices, nil
@@ -160,10 +195,12 @@ func (db *DB) CreateDevice(d *Device) error {
 	d.CreatedAt = time.Now().UnixMilli()
 
 	_, err := db.conn.Exec(`INSERT INTO devices (id, name, ip, port, version, community,
-		security_name, security_level, auth_protocol, auth_password, priv_protocol, priv_password, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		security_name, security_level, auth_protocol, auth_password, priv_protocol, priv_password,
+		ssh_username, ssh_password, ssh_port, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		d.ID, d.Name, d.IP, d.Port, d.Version, d.Community,
-		d.SecurityName, d.SecurityLevel, d.AuthProtocol, d.AuthPassword, d.PrivProtocol, d.PrivPassword, d.CreatedAt)
+		d.SecurityName, d.SecurityLevel, d.AuthProtocol, d.AuthPassword, d.PrivProtocol, d.PrivPassword,
+		d.SSHUsername, d.SSHPassword, d.SSHPort, d.CreatedAt)
 	return err
 }
 
