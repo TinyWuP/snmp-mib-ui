@@ -633,6 +633,21 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
                       <option value="mikrotik">MikroTik</option>
                       <option value="dell">戴尔 (Dell)</option>
                       <option value="hp">惠普 (HP)</option>
+                      <option value="ruckus">Ruckus</option>
+                      <option value="ubiquiti">Ubiquiti</option>
+                      <option value="tplink">TP-Link</option>
+                      <option value="dlink">D-Link</option>
+                      <option value="netgear">Netgear</option>
+                      <option value="extreme">Extreme Networks</option>
+                      <option value="brocade">Brocade</option>
+                      <option value="allied">Allied Telesis</option>
+                      <option value="alcatel">Alcatel-Lucent</option>
+                      <option value="nokia">Nokia</option>
+                      <option value="zte">中兴 (ZTE)</option>
+                      <option value="radwin">Radwin</option>
+                      <option value="cambium">Cambium</option>
+                      <option value="motorola">Motorola</option>
+                      <option value="avaya">Avaya</option>
                     </select>
                     <button
                       onClick={handleDetectBrand}

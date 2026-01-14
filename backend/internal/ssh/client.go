@@ -13,16 +13,31 @@ import (
 type DeviceBrand string
 
 const (
-	BrandGeneric  DeviceBrand = "generic"  // 通用Linux
-	BrandHuawei   DeviceBrand = "huawei"   // 华为
-	BrandCisco    DeviceBrand = "cisco"    // 思科
-	BrandH3C      DeviceBrand = "h3c"      // H3C
-	BrandJuniper  DeviceBrand = "juniper"  // Juniper
-	BrandArista   DeviceBrand = "arista"   // Arista
-	BrandFortinet DeviceBrand = "fortinet" // Fortinet
-	BrandMikroTik DeviceBrand = "mikrotik" // MikroTik
-	BrandDell     DeviceBrand = "dell"     // 戴尔
-	BrandHP       DeviceBrand = "hp"       // 惠普
+	BrandGeneric   DeviceBrand = "generic"   // 通用Linux
+	BrandHuawei    DeviceBrand = "huawei"    // 华为
+	BrandCisco     DeviceBrand = "cisco"     // 思科
+	BrandH3C       DeviceBrand = "h3c"       // H3C
+	BrandJuniper   DeviceBrand = "juniper"   // Juniper
+	BrandArista    DeviceBrand = "arista"    // Arista
+	BrandFortinet  DeviceBrand = "fortinet"  // Fortinet
+	BrandMikroTik  DeviceBrand = "mikrotik"  // MikroTik
+	BrandDell      DeviceBrand = "dell"      // 戴尔
+	BrandHP        DeviceBrand = "hp"        // 惠普
+	BrandRuckus    DeviceBrand = "ruckus"    // Ruckus
+	BrandUbiquiti  DeviceBrand = "ubiquiti"  // Ubiquiti
+	BrandTPLink    DeviceBrand = "tplink"    // TP-Link
+	BrandDLink     DeviceBrand = "dlink"     // D-Link
+	BrandNetgear   DeviceBrand = "netgear"   // Netgear
+	BrandExtreme   DeviceBrand = "extreme"   // Extreme Networks
+	BrandBrocade   DeviceBrand = "brocade"   // Brocade
+	BrandAllied    DeviceBrand = "allied"    // Allied Telesis
+	BrandAlcatel   DeviceBrand = "alcatel"   // Alcatel-Lucent
+	BrandNokia     DeviceBrand = "nokia"     // Nokia
+	BrandZTE       DeviceBrand = "zte"       // 中兴
+	BrandRadwin    DeviceBrand = "radwin"    // Radwin
+	BrandCambium   DeviceBrand = "cambium"   // Cambium
+	BrandMotorola  DeviceBrand = "motorola"  // Motorola Solutions
+	BrandAvaya     DeviceBrand = "avaya"     // Avaya
 )
 
 // Client SSH客户端
@@ -122,6 +137,81 @@ func (c *Client) DetectBrand() (DeviceBrand, error) {
 		return BrandHP, nil
 	}
 
+	// 检测Ruckus设备
+	if strings.Contains(lowerOutput, "ruckus") || strings.Contains(lowerOutput, "smartzone") {
+		return BrandRuckus, nil
+	}
+
+	// 检测Ubiquiti设备
+	if strings.Contains(lowerOutput, "ubiquiti") || strings.Contains(lowerOutput, "unifi") || strings.Contains(lowerOutput, "edgeos") {
+		return BrandUbiquiti, nil
+	}
+
+	// 检测TP-Link设备
+	if strings.Contains(lowerOutput, "tp-link") || strings.Contains(lowerOutput, "tplink") || strings.Contains(lowerOutput, "tp-link") {
+		return BrandTPLink, nil
+	}
+
+	// 检测D-Link设备
+	if strings.Contains(lowerOutput, "d-link") || strings.Contains(lowerOutput, "dlink") {
+		return BrandDLink, nil
+	}
+
+	// 检测Netgear设备
+	if strings.Contains(lowerOutput, "netgear") {
+		return BrandNetgear, nil
+	}
+
+	// 检测Extreme Networks设备
+	if strings.Contains(lowerOutput, "extreme") || strings.Contains(lowerOutput, "extremexos") {
+		return BrandExtreme, nil
+	}
+
+	// 检测Brocade设备
+	if strings.Contains(lowerOutput, "brocade") || strings.Contains(lowerOutput, "fastiron") {
+		return BrandBrocade, nil
+	}
+
+	// 检测Allied Telesis设备
+	if strings.Contains(lowerOutput, "allied") || strings.Contains(lowerOutput, "allied telesis") {
+		return BrandAllied, nil
+	}
+
+	// 检测Alcatel-Lucent设备
+	if strings.Contains(lowerOutput, "alcatel") || strings.Contains(lowerOutput, "lucent") || strings.Contains(lowerOutput, "nokia") {
+		return BrandAlcatel, nil
+	}
+
+	// 检测Nokia设备
+	if strings.Contains(lowerOutput, "nokia") {
+		return BrandNokia, nil
+	}
+
+	// 检测中兴设备
+	if strings.Contains(lowerOutput, "zte") || strings.Contains(lowerOutput, "zhongxing") {
+		return BrandZTE, nil
+	}
+
+	// 检测Radwin设备
+	if strings.Contains(lowerOutput, "radwin") {
+		return BrandRadwin, nil
+	}
+
+	// 检测Cambium设备
+	if strings.Contains(lowerOutput, "cambium") || strings.Contains(lowerOutput, "epmp") {
+		return BrandCambium, nil
+	}
+
+	// 检测Motorola Solutions设备
+	if strings.Contains(lowerOutput, "motorola") || strings.Contains(lowerOutput, "canopy") {
+		return BrandMotorola, nil
+	}
+
+	// 检测Avaya设备
+	if strings.Contains(lowerOutput, "avaya") || strings.Contains(lowerOutput, "nortel") {
+		return BrandAvaya, nil
+	}
+
 	return BrandGeneric, nil
 }
 
@@ -178,18 +268,22 @@ func (c *Client) Execute(command string) (string, string, error) {
 func (c *Client) CheckSNMPStatus() (*SNMPStatus, error) {
 	// 根据品牌选择检查方法
 	switch c.brand {
-	case BrandHuawei, BrandH3C:
+	case BrandHuawei, BrandH3C, BrandRuckus, BrandTPLink, BrandDLink, BrandNetgear, BrandBrocade, BrandAllied, BrandAlcatel, BrandNokia, BrandZTE, BrandAvaya:
 		return c.checkSNMPStatusNetworkDevice()
-	case BrandCisco:
+	case BrandCisco, BrandArista, BrandDell, BrandHP:
 		return c.checkSNMPStatusCisco()
 	case BrandJuniper:
 		return c.checkSNMPStatusJuniper()
-	case BrandArista, BrandDell, BrandHP:
-		return c.checkSNMPStatusNetworkDevice()
 	case BrandFortinet:
 		return c.checkSNMPStatusFortinet()
 	case BrandMikroTik:
 		return c.checkSNMPStatusMikroTik()
+	case BrandUbiquiti:
+		return c.checkSNMPStatusUbiquiti()
+	case BrandExtreme:
+		return c.checkSNMPStatusExtreme()
+	case BrandRadwin, BrandCambium, BrandMotorola:
+		return c.checkSNMPStatusWireless()
 	default:
 		return c.checkSNMPStatusGeneric()
 	}
@@ -373,6 +467,84 @@ func (c *Client) checkSNMPStatusMikroTik() (*SNMPStatus, error) {
 	return status, nil
 }
 
+// checkSNMPStatusUbiquiti Ubiquiti设备SNMP状态检查
+func (c *Client) checkSNMPStatusUbiquiti() (*SNMPStatus, error) {
+	// 检查SNMP是否启用
+	stdout, _, err := c.Execute("show service snmp 2>/dev/null")
+	if err != nil {
+		return &SNMPStatus{
+			Running: false,
+			Message: "SNMP服务未运行或未配置",
+		}, nil
+	}
+
+	running := strings.Contains(stdout, "enable") || strings.Contains(stdout, "active")
+	message := "SNMP服务" + map[bool]string{true: "正在运行", false: "未运行"}[running]
+
+	status := &SNMPStatus{
+		Running: running,
+		Message: message,
+		Config:  strings.TrimSpace(stdout),
+	}
+
+	// 解析配置信息
+	status.parseConfig(stdout)
+
+	return status, nil
+}
+
+// checkSNMPStatusExtreme Extreme Networks设备SNMP状态检查
+func (c *Client) checkSNMPStatusExtreme() (*SNMPStatus, error) {
+	// 检查SNMP是否启用
+	stdout, _, err := c.Execute("show snmp 2>/dev/null")
+	if err != nil {
+		return &SNMPStatus{
+			Running: false,
+			Message: "SNMP服务未运行或未配置",
+		}, nil
+	}
+
+	running := strings.Contains(stdout, "enabled") || strings.Contains(stdout, "active")
+	message := "SNMP服务" + map[bool]string{true: "正在运行", false: "未运行"}[running]
+
+	status := &SNMPStatus{
+		Running: running,
+		Message: message,
+		Config:  strings.TrimSpace(stdout),
+	}
+
+	// 解析配置信息
+	status.parseConfig(stdout)
+
+	return status, nil
+}
+
+// checkSNMPStatusWireless 无线设备SNMP状态检查（通用）
+func (c *Client) checkSNMPStatusWireless() (*SNMPStatus, error) {
+	// 检查SNMP是否启用
+	stdout, _, err := c.Execute("show snmp 2>/dev/null || show system snmp 2>/dev/null")
+	if err != nil {
+		return &SNMPStatus{
+			Running: false,
+			Message: "SNMP服务未运行或未配置",
+		}, nil
+	}
+
+	running := strings.Contains(stdout, "enabled") || strings.Contains(stdout, "active") || strings.Contains(stdout, "running")
+	message := "SNMP服务" + map[bool]string{true: "正在运行", false: "未运行"}[running]
+
+	status := &SNMPStatus{
+		Running: running,
+		Message: message,
+		Config:  strings.TrimSpace(stdout),
+	}
+
+	// 解析配置信息
+	status.parseConfig(stdout)
+
+	return status, nil
+}
+
 // EnableSNMP 启用SNMP服务
 func (c *Client) EnableSNMP(config *SNMPConfig) error {
 	// 根据品牌选择配置方法
@@ -395,6 +567,34 @@ func (c *Client) EnableSNMP(config *SNMPConfig) error {
 		return c.enableSNMPDell(config)
 	case BrandHP:
 		return c.enableSNMPHP(config)
+	case BrandRuckus:
+		return c.enableSNMPRuckus(config)
+	case BrandUbiquiti:
+		return c.enableSNMPUbiquiti(config)
+	case BrandTPLink:
+		return c.enableSNMPTPLink(config)
+	case BrandDLink:
+		return c.enableSNMPDLink(config)
+	case BrandNetgear:
+		return c.enableSNMPNetgear(config)
+	case BrandExtreme:
+		return c.enableSNMPExtreme(config)
+	case BrandBrocade:
+		return c.enableSNMPBrocade(config)
+	case BrandAllied:
+		return c.enableSNMPAllied(config)
+	case BrandAlcatel, BrandNokia:
+		return c.enableSNMPAlcatel(config)
+	case BrandZTE:
+		return c.enableSNMPZTE(config)
+	case BrandRadwin:
+		return c.enableSNMPRadwin(config)
+	case BrandCambium:
+		return c.enableSNMPCambium(config)
+	case BrandMotorola:
+		return c.enableSNMPMotorola(config)
+	case BrandAvaya:
+		return c.enableSNMPAvaya(config)
 	default:
 		return c.enableSNMPGeneric(config)
 	}
@@ -825,6 +1025,442 @@ func (c *Client) TestConnection() error {
 	_, _, err := c.Execute("echo 'SSH连接测试成功'")
 	if err != nil {
 		return fmt.Errorf("SSH命令执行失败: %w", err)
+	}
+
+	return nil
+}
+
+// enableSNMPRuckus Ruckus设备SNMP配置
+func (c *Client) enableSNMPRuckus(config *SNMPConfig) error {
+	// Ruckus SmartZone命令
+	commands := []string{
+		"configure",
+	}
+
+	if config.Version == "v2c" {
+		commands = append(commands,
+			fmt.Sprintf("snmp-server community %s ro", config.Community),
+		)
+	}
+
+	commands = append(commands,
+		fmt.Sprintf("snmp-server location %s", config.Location),
+		fmt.Sprintf("snmp-server contact %s", config.Contact),
+		"end",
+		"write memory",
+	)
+
+	// 执行配置命令
+	for _, cmd := range commands {
+		_, stderr, err := c.Execute(cmd)
+		if err != nil && !strings.Contains(stderr, "already exists") {
+			return fmt.Errorf("执行命令失败 '%s': %w (stderr: %s)", cmd, err, stderr)
+		}
+	}
+
+	return nil
+}
+
+// enableSNMPUbiquiti Ubiquiti设备SNMP配置
+func (c *Client) enableSNMPUbiquiti(config *SNMPConfig) error {
+	// Ubiquiti EdgeRouter命令
+	commands := []string{
+		"configure",
+	}
+
+	if config.Version == "v2c" {
+		commands = append(commands,
+			fmt.Sprintf("set service snmp community %s authorization ro", config.Community),
+		)
+	}
+
+	commands = append(commands,
+		fmt.Sprintf("set system location %s", config.Location),
+		fmt.Sprintf("set system contact %s", config.Contact),
+		"commit",
+		"save",
+	)
+
+	// 执行配置命令
+	for _, cmd := range commands {
+		_, stderr, err := c.Execute(cmd)
+		if err != nil && !strings.Contains(stderr, "already exists") {
+			return fmt.Errorf("执行命令失败 '%s': %w (stderr: %s)", cmd, err, stderr)
+		}
+	}
+
+	return nil
+}
+
+// enableSNMPTPLink TP-Link设备SNMP配置
+func (c *Client) enableSNMPTPLink(config *SNMPConfig) error {
+	// TP-Link Smart/Pro命令
+	commands := []string{
+		"enable",
+		"configure terminal",
+	}
+
+	if config.Version == "v2c" {
+		commands = append(commands,
+			fmt.Sprintf("snmp-server community %s ro", config.Community),
+		)
+	}
+
+	commands = append(commands,
+		fmt.Sprintf("snmp-server location %s", config.Location),
+		fmt.Sprintf("snmp-server contact %s", config.Contact),
+		"end",
+		"write",
+	)
+
+	// 执行配置命令
+	for _, cmd := range commands {
+		_, stderr, err := c.Execute(cmd)
+		if err != nil && !strings.Contains(stderr, "already exists") {
+			return fmt.Errorf("执行命令失败 '%s': %w (stderr: %s)", cmd, err, stderr)
+		}
+	}
+
+	return nil
+}
+
+// enableSNMPDLink D-Link设备SNMP配置
+func (c *Client) enableSNMPDLink(config *SNMPConfig) error {
+	// D-Link Smart命令
+	commands := []string{
+		"enable",
+		"config",
+	}
+
+	if config.Version == "v2c" {
+		commands = append(commands,
+			fmt.Sprintf("snmp-server community %s ro", config.Community),
+		)
+	}
+
+	commands = append(commands,
+		fmt.Sprintf("snmp-server location %s", config.Location),
+		fmt.Sprintf("snmp-server contact %s", config.Contact),
+		"exit",
+		"save",
+	)
+
+	// 执行配置命令
+	for _, cmd := range commands {
+		_, stderr, err := c.Execute(cmd)
+		if err != nil && !strings.Contains(stderr, "already exists") {
+			return fmt.Errorf("执行命令失败 '%s': %w (stderr: %s)", cmd, err, stderr)
+		}
+	}
+
+	return nil
+}
+
+// enableSNMPNetgear Netgear设备SNMP配置
+func (c *Client) enableSNMPNetgear(config *SNMPConfig) error {
+	// Netgear ProSafe命令
+	commands := []string{
+		"enable",
+		"configure terminal",
+	}
+
+	if config.Version == "v2c" {
+		commands = append(commands,
+			fmt.Sprintf("snmp-server community %s ro", config.Community),
+		)
+	}
+
+	commands = append(commands,
+		fmt.Sprintf("snmp-server location %s", config.Location),
+		fmt.Sprintf("snmp-server contact %s", config.Contact),
+		"end",
+		"write memory",
+	)
+
+	// 执行配置命令
+	for _, cmd := range commands {
+		_, stderr, err := c.Execute(cmd)
+		if err != nil && !strings.Contains(stderr, "already exists") {
+			return fmt.Errorf("执行命令失败 '%s': %w (stderr: %s)", cmd, err, stderr)
+		}
+	}
+
+	return nil
+}
+
+// enableSNMPExtreme Extreme Networks设备SNMP配置
+func (c *Client) enableSNMPExtreme(config *SNMPConfig) error {
+	// Extreme Networks EXOS命令
+	commands := []string{
+		"configure snmp",
+	}
+
+	if config.Version == "v2c" {
+		commands = append(commands,
+			fmt.Sprintf("create access-profile %s ro", config.Community),
+		)
+	}
+
+	commands = append(commands,
+		fmt.Sprintf("configure snmp sysLocation %s", config.Location),
+		fmt.Sprintf("configure snmp sysContact %s", config.Contact),
+		"save",
+	)
+
+	// 执行配置命令
+	for _, cmd := range commands {
+		_, stderr, err := c.Execute(cmd)
+		if err != nil && !strings.Contains(stderr, "already exists") {
+			return fmt.Errorf("执行命令失败 '%s': %w (stderr: %s)", cmd, err, stderr)
+		}
+	}
+
+	return nil
+}
+
+// enableSNMPBrocade Brocade设备SNMP配置
+func (c *Client) enableSNMPBrocade(config *SNMPConfig) error {
+	// Brocade FastIron命令
+	commands := []string{
+		"configure terminal",
+	}
+
+	if config.Version == "v2c" {
+		commands = append(commands,
+			fmt.Sprintf("snmp-server community %s ro", config.Community),
+		)
+	}
+
+	commands = append(commands,
+		fmt.Sprintf("snmp-server location %s", config.Location),
+		fmt.Sprintf("snmp-server contact %s", config.Contact),
+		"end",
+		"write memory",
+	)
+
+	// 执行配置命令
+	for _, cmd := range commands {
+		_, stderr, err := c.Execute(cmd)
+		if err != nil && !strings.Contains(stderr, "already exists") {
+			return fmt.Errorf("执行命令失败 '%s': %w (stderr: %s)", cmd, err, stderr)
+		}
+	}
+
+	return nil
+}
+
+// enableSNMPAllied Allied Telesis设备SNMP配置
+func (c *Client) enableSNMPAllied(config *SNMPConfig) error {
+	// Allied Telesis命令
+	commands := []string{
+		"configure",
+	}
+
+	if config.Version == "v2c" {
+		commands = append(commands,
+			fmt.Sprintf("snmp-server community %s ro", config.Community),
+		)
+	}
+
+	commands = append(commands,
+		fmt.Sprintf("snmp-server location %s", config.Location),
+		fmt.Sprintf("snmp-server contact %s", config.Contact),
+		"exit",
+		"write",
+	)
+
+	// 执行配置命令
+	for _, cmd := range commands {
+		_, stderr, err := c.Execute(cmd)
+		if err != nil && !strings.Contains(stderr, "already exists") {
+			return fmt.Errorf("执行命令失败 '%s': %w (stderr: %s)", cmd, err, stderr)
+		}
+	}
+
+	return nil
+}
+
+// enableSNMPAlcatel Alcatel-Lucent/Nokia设备SNMP配置
+func (c *Client) enableSNMPAlcatel(config *SNMPConfig) error {
+	// Alcatel-Lucent OmniSwitch命令
+	commands := []string{
+		"configure",
+	}
+
+	if config.Version == "v2c" {
+		commands = append(commands,
+			fmt.Sprintf("snmp-server community %s ro", config.Community),
+		)
+	}
+
+	commands = append(commands,
+		fmt.Sprintf("snmp-server location %s", config.Location),
+		fmt.Sprintf("snmp-server contact %s", config.Contact),
+		"exit",
+		"save",
+	)
+
+	// 执行配置命令
+	for _, cmd := range commands {
+		_, stderr, err := c.Execute(cmd)
+		if err != nil && !strings.Contains(stderr, "already exists") {
+			return fmt.Errorf("执行命令失败 '%s': %w (stderr: %s)", cmd, err, stderr)
+		}
+	}
+
+	return nil
+}
+
+// enableSNMPZTE 中兴设备SNMP配置
+func (c *Client) enableSNMPZTE(config *SNMPConfig) error {
+	// 中兴ZXR10命令
+	commands := []string{
+		"configure terminal",
+	}
+
+	if config.Version == "v2c" {
+		commands = append(commands,
+			fmt.Sprintf("snmp-server community %s ro", config.Community),
+		)
+	}
+
+	commands = append(commands,
+		fmt.Sprintf("snmp-server location %s", config.Location),
+		fmt.Sprintf("snmp-server contact %s", config.Contact),
+		"end",
+		"write",
+	)
+
+	// 执行配置命令
+	for _, cmd := range commands {
+		_, stderr, err := c.Execute(cmd)
+		if err != nil && !strings.Contains(stderr, "already exists") {
+			return fmt.Errorf("执行命令失败 '%s': %w (stderr: %s)", cmd, err, stderr)
+		}
+	}
+
+	return nil
+}
+
+// enableSNMPRadwin Radwin设备SNMP配置
+func (c *Client) enableSNMPRadwin(config *SNMPConfig) error {
+	// Radwin设备命令
+	commands := []string{
+		"configure",
+	}
+
+	if config.Version == "v2c" {
+		commands = append(commands,
+			fmt.Sprintf("snmp community %s ro", config.Community),
+		)
+	}
+
+	commands = append(commands,
+		fmt.Sprintf("snmp location %s", config.Location),
+		fmt.Sprintf("snmp contact %s", config.Contact),
+		"exit",
+		"write",
+	)
+
+	// 执行配置命令
+	for _, cmd := range commands {
+		_, stderr, err := c.Execute(cmd)
+		if err != nil && !strings.Contains(stderr, "already exists") {
+			return fmt.Errorf("执行命令失败 '%s': %w (stderr: %s)", cmd, err, stderr)
+		}
+	}
+
+	return nil
+}
+
+// enableSNMPCambium Cambium设备SNMP配置
+func (c *Client) enableSNMPCambium(config *SNMPConfig) error {
+	// Cambium ePMP命令
+	commands := []string{
+		"configure",
+	}
+
+	if config.Version == "v2c" {
+		commands = append(commands,
+			fmt.Sprintf("snmp community %s ro", config.Community),
+		)
+	}
+
+	commands = append(commands,
+		fmt.Sprintf("snmp location %s", config.Location),
+		fmt.Sprintf("snmp contact %s", config.Contact),
+		"exit",
+		"save",
+	)
+
+	// 执行配置命令
+	for _, cmd := range commands {
+		_, stderr, err := c.Execute(cmd)
+		if err != nil && !strings.Contains(stderr, "already exists") {
+			return fmt.Errorf("执行命令失败 '%s': %w (stderr: %s)", cmd, err, stderr)
+		}
+	}
+
+	return nil
+}
+
+// enableSNMPMotorola Motorola Solutions设备SNMP配置
+func (c *Client) enableSNMPMotorola(config *SNMPConfig) error {
+	// Motorola Canopy命令
+	commands := []string{
+		"configure",
+	}
+
+	if config.Version == "v2c" {
+		commands = append(commands,
+			fmt.Sprintf("snmp community %s ro", config.Community),
+		)
+	}
+
+	commands = append(commands,
+		fmt.Sprintf("snmp location %s", config.Location),
+		fmt.Sprintf("snmp contact %s", config.Contact),
+		"exit",
+		"save",
+	)
+
+	// 执行配置命令
+	for _, cmd := range commands {
+		_, stderr, err := c.Execute(cmd)
+		if err != nil && !strings.Contains(stderr, "already exists") {
+			return fmt.Errorf("执行命令失败 '%s': %w (stderr: %s)", cmd, err, stderr)
+		}
+	}
+
+	return nil
+}
+
+// enableSNMPAvaya Avaya设备SNMP配置
+func (c *Client) enableSNMPAvaya(config *SNMPConfig) error {
+	// Avaya/Nortel命令
+	commands := []string{
+		"configure",
+	}
+
+	if config.Version == "v2c" {
+		commands = append(commands,
+			fmt.Sprintf("snmp-server community %s ro", config.Community),
+		)
+	}
+
+	commands = append(commands,
+		fmt.Sprintf("snmp-server location %s", config.Location),
+		fmt.Sprintf("snmp-server contact %s", config.Contact),
+		"exit",
+		"save",
+	)
+
+	// 执行配置命令
+	for _, cmd := range commands {
+		_, stderr, err := c.Execute(cmd)
+		if err != nil && !strings.Contains(stderr, "already exists") {
+			return fmt.Errorf("执行命令失败 '%s': %w (stderr: %s)", cmd, err, stderr)
+		}
 	}
 
 	return nil

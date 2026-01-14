@@ -92,7 +92,7 @@ graph LR
 | 🔎 **全局智能搜索** | ✅ | 跨所有 MIB 文件搜索 OID 名称、描述、语法，快速定位指标 |
 | ✅ **配置验证优化** | ✅ | 自动检查 YAML 语法、重复 OID、采集开销，提供优化建议；支持实时验证配置参数 |
 | 🔌 **SSH 远程配置** | ✅ | 支持 SSH 远程连接设备，检查 SNMP 状态，一键启用 SNMP 服务 |
-| 🏷️ **多品牌支持** | ✅ | 支持华为、思科、H3C、Juniper、Arista、Fortinet、MikroTik、戴尔、惠普等多种品牌设备 |
+| 🏷️ **多品牌支持** | ✅ | 支持华为、思科、H3C、Juniper、Arista、Fortinet、MikroTik、戴尔、惠普、Ruckus、Ubiquiti、TP-Link、D-Link、Netgear、Extreme、Brocade、ZTE、Nokia、Alcatel-Lucent 等多种品牌设备 |
 
 </div>
 
