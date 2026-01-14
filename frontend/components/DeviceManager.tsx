@@ -60,9 +60,9 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
 
   const handleExportCSV = () => {
     if (devices.length === 0) return alert('No devices to export.');
-    const headers = 'Name,IP,Port,Version,Community,v3User,v3Level,v3AuthProto,v3AuthPass,v3PrivProto,v3PrivPass\n';
+    const headers = 'Name,IP,Port,Version,Community,v3User,v3Level,v3AuthProto,v3AuthPass,v3PrivProto,v3PrivPass,SSHUsername,SSHPassword,SSHPort\n';
     const csvContent = devices.map(d => 
-      `${d.name},${d.ip},${d.port},${d.version},${d.community || ''},${d.securityName || ''},${d.securityLevel || ''},${d.authProtocol || ''},${d.authPassword || ''},${d.privProtocol || ''},${d.privPassword || ''}`
+      `${d.name},${d.ip},${d.port},${d.version},${d.community || ''},${d.securityName || ''},${d.securityLevel || ''},${d.authProtocol || ''},${d.authPassword || ''},${d.privProtocol || ''},${d.privPassword || ''},${d.sshUsername || ''},${d.sshPassword || ''},${d.sshPort || 22}`
     ).join('\n');
     const blob = new Blob([headers + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -98,7 +98,10 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
             authProtocol: parts[7] as any,
             authPassword: parts[8],
             privProtocol: parts[9] as any,
-            privPassword: parts[10]
+            privPassword: parts[10],
+            sshUsername: parts[11],
+            sshPassword: parts[12],
+            sshPort: parseInt(parts[13]) || 22
           });
         }
       }
@@ -500,18 +503,64 @@ const DeviceManager: React.FC<DeviceManagerProps> = ({ devices, onAdd, onAddBatc
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-
-              <div className="flex gap-6 mt-16">
-                <button type="button" onClick={() => setShowAdd(false)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-black py-5 rounded-3xl transition-all uppercase tracking-[0.2em] text-xs">Dismiss</button>
-                <button type="submit" className="flex-2 bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-3xl transition-all shadow-2xl shadow-blue-600/40 uppercase tracking-[0.2em] text-xs px-12">Commit Asset</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
+                                  )}
+                                </div>
+                  
+                                {/* SSH Credentials */}
+                                <div className="space-y-8 p-8 bg-green-500/5 rounded-[32px] border border-green-500/10 animate-in fade-in slide-in-from-bottom-4">
+                                  <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-10 h-10 bg-green-600/20 rounded-2xl flex items-center justify-center">
+                                      <svg className="w-5 h-5 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M2 12h20M2 12l5-5M2 12l5 5M22 12l-5-5M22 12l-5 5" />
+                                      </svg>
+                                    </div>
+                                    <div>
+                                      <h4 className="text-sm font-black text-white uppercase tracking-widest">SSH Configuration</h4>
+                                      <p className="text-xs text-slate-500">用于远程配置 SNMP 服务（可选）</p>
+                                    </div>
+                                  </div>
+                  
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="space-y-3">
+                                      <label className="block text-[10px] font-black text-green-500 uppercase tracking-[0.2em]">SSH Username</label>
+                                      <input
+                                        value={newDevice.sshUsername || ''}
+                                        onChange={e => setNewDevice({...newDevice, sshUsername: e.target.value})}
+                                        type="text"
+                                        placeholder="root"
+                                        className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-4 text-sm text-white focus:border-green-500 outline-none transition-all font-bold"
+                                      />
+                                    </div>
+                                    <div className="space-y-3">
+                                      <label className="block text-[10px] font-black text-green-500 uppercase tracking-[0.2em]">SSH Password</label>
+                                      <input
+                                        value={newDevice.sshPassword || ''}
+                                        onChange={e => setNewDevice({...newDevice, sshPassword: e.target.value})}
+                                        type="password"
+                                        placeholder="••••••••"
+                                        className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-4 text-sm text-white focus:border-green-500 outline-none transition-all font-bold"
+                                      />
+                                    </div>
+                                    <div className="space-y-3">
+                                      <label className="block text-[10px] font-black text-green-500 uppercase tracking-[0.2em]">SSH Port</label>
+                                      <input
+                                        value={newDevice.sshPort || 22}
+                                        onChange={e => setNewDevice({...newDevice, sshPort: parseInt(e.target.value) || 22})}
+                                        type="number"
+                                        className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-4 text-sm text-white focus:border-green-500 outline-none transition-all font-bold"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                  
+                                <div className="flex gap-6 mt-16">
+                                  <button type="button" onClick={() => setShowAdd(false)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-black py-5 rounded-3xl transition-all uppercase tracking-[0.2em] text-xs">Dismiss</button>
+                                  <button type="submit" className="flex-2 bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-3xl transition-all shadow-2xl shadow-blue-600/40 uppercase tracking-[0.2em] text-xs px-12">Commit Asset</button>
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        )}
       {/* SSH Modal */}
       {showSSHModal && selectedDevice && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-[100] flex items-center justify-center p-8 overflow-y-auto">

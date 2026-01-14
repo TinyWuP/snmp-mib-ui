@@ -270,8 +270,45 @@ docker-compose up -d --build
    - IP 地址
    - SNMP 版本（v1/v2c/v3）
    - Community 字符串或 v3 认证信息
+   - SSH 凭据（可选，用于远程配置 SNMP）
+     * SSH 用户名
+     * SSH 密码
+     * SSH 端口（默认 22）
 4. 保存设备
 ```
+
+**📋 CSV 批量导入格式：**
+
+```csv
+Name,IP,Port,Version,Community,v3User,v3Level,v3AuthProto,v3AuthPass,v3PrivProto,v3PrivPass,SSHUsername,SSHPassword,SSHPort
+CORE-SW-01,192.168.1.1,161,v2c,public,,,,,,,,root,admin123,22
+CORE-SW-02,192.168.1.2,161,v3,,snmp_user,authPriv,SHA,auth123,AES,priv123,admin,pass456,22
+```
+
+**📝 CSV 字段说明：**
+
+| 字段 | 说明 | 必填 | 默认值 |
+|------|------|------|--------|
+| Name | 设备名称 | ✅ | - |
+| IP | 设备 IP 地址 | ✅ | - |
+| Port | SNMP 端口 | ❌ | 161 |
+| Version | SNMP 版本（v1/v2c/v3） | ❌ | v2c |
+| Community | v2c 团体名字符串 | ❌ | public |
+| v3User | v3 安全名称 | ❌ | - |
+| v3Level | v3 安全级别 | ❌ | - |
+| v3AuthProto | v3 认证协议 | ❌ | - |
+| v3AuthPass | v3 认证密码 | ❌ | - |
+| v3PrivProto | v3 加密协议 | ❌ | - |
+| v3PrivPass | v3 加密密码 | ❌ | - |
+| SSHUsername | SSH 用户名 | ❌ | - |
+| SSHPassword | SSH 密码 | ❌ | - |
+| SSHPort | SSH 端口 | ❌ | 22 |
+
+**💡 提示：**
+- SSH 凭据为可选项，用于远程配置 SNMP 服务
+- 如果需要使用 SSH 远程配置功能，请填写 SSH 凭据
+- CSV 文件支持 UTF-8 编码，第一行为表头
+- 可以点击"Export"按钮导出当前设备列表作为模板
 
 ---
 
